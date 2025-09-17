@@ -1,0 +1,4629 @@
+================================================================================
+CODE FILES COMPILATION
+Generated on: C:\src\Bhaba_com\bhaba-marketplace
+Total files: 27
+================================================================================
+
+FILE STRUCTURE:
+----------------------------------------
+  1. C:\src\Bhaba_com\bhaba-marketplace\api\index.js
+  2. C:\src\Bhaba_com\bhaba-marketplace\src\components\BottomNavigation.tsx
+  3. C:\src\Bhaba_com\bhaba-marketplace\src\components\DynamicAspectRatioImage.tsx
+  4. C:\src\Bhaba_com\bhaba-marketplace\src\components\FilterModal.tsx
+  5. C:\src\Bhaba_com\bhaba-marketplace\src\components\Footer.tsx
+  6. C:\src\Bhaba_com\bhaba-marketplace\src\components\HeaderBar.tsx
+  7. C:\src\Bhaba_com\bhaba-marketplace\src\components\LazyImage.tsx
+  8. C:\src\Bhaba_com\bhaba-marketplace\src\components\LoadingOverlay.tsx
+  9. C:\src\Bhaba_com\bhaba-marketplace\src\components\ProductCard.tsx
+ 10. C:\src\Bhaba_com\bhaba-marketplace\src\components\ProductGrid.tsx
+ 11. C:\src\Bhaba_com\bhaba-marketplace\src\pages\_app.tsx
+ 12. C:\src\Bhaba_com\bhaba-marketplace\src\pages\account.tsx
+ 13. C:\src\Bhaba_com\bhaba-marketplace\src\pages\category\[category].tsx
+ 14. C:\src\Bhaba_com\bhaba-marketplace\src\pages\index.tsx
+ 15. C:\src\Bhaba_com\bhaba-marketplace\src\pages\privacy-policy-full.tsx
+ 16. C:\src\Bhaba_com\bhaba-marketplace\src\pages\privacy-policy.tsx
+ 17. C:\src\Bhaba_com\bhaba-marketplace\src\pages\product\[category]\[slug].tsx
+ 18. C:\src\Bhaba_com\bhaba-marketplace\src\pages\terms-of-service-full.tsx
+ 19. C:\src\Bhaba_com\bhaba-marketplace\src\pages\terms-of-service.tsx
+ 20. C:\src\Bhaba_com\bhaba-marketplace\src\styles\globals.css
+ 21. C:\src\Bhaba_com\bhaba-marketplace\src\types\global.d.ts
+ 22. C:\src\Bhaba_com\bhaba-marketplace\src\types\index.ts
+ 23. C:\src\Bhaba_com\bhaba-marketplace\src\utils\api.ts
+ 24. C:\src\Bhaba_com\bhaba-marketplace\src\utils\formatCurrency.ts
+ 25. C:\src\Bhaba_com\bhaba-marketplace\src\utils\sanitizeData.ts
+ 26. C:\src\Bhaba_com\bhaba-marketplace\.env
+ 27. C:\src\Bhaba_com\bhaba-marketplace\scripts\generate-sitemap.ts
+
+================================================================================
+
+FILE 1: C:\src\Bhaba_com\bhaba-marketplace\api\index.js
+================================================================================
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import { MeiliSearch } from 'meilisearch';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+dotenv.config({ path: '.env.local' });
+
+console.log('Environment Configuration:');
+console.log('MEILI_HOST:', process.env.MEILI_HOST ? '***' : 'NOT FOUND');
+console.log('MEILI_API_KEY:', process.env.MEILI_API_KEY ? '***' : 'NOT FOUND');
+console.log('PORT:', process.env.PORT || '5000 (default)');
+
+if (!process.env.MEILI_HOST) {
+  console.error('FATAL ERROR: MEILI_HOST is not defined in .env.local');
+  process.exit(1);
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+let client;
+let index;
+try {
+  client = new MeiliSearch({
+    host: process.env.MEILI_HOST,
+    apiKey: process.env.MEILI_API_KEY || '',
+      requestConfig: {
+    maxTotalHits: 10000 
+  }
+  });
+  
+  index = client.index('vendor_store_data');
+  console.log('MeiliSearch client initialized successfully');
+} catch (error) {
+  console.error('Failed to initialize MeiliSearch client:', error);
+  process.exit(1);
+}
+
+function transformFirebaseUrlToImageKit(firebaseUrl) {
+  if (!firebaseUrl) return '';
+  
+  try {
+    const urlObj = new URL(firebaseUrl);
+    const encodedPath = urlObj.pathname.split('/o/')[1];
+    if (!encodedPath) return firebaseUrl;
+
+    const decodedPath = decodeURIComponent(encodedPath);
+    return `https://ik.imagekit.io/3n0rrhtkz/firebase_files/${decodedPath}`;
+  } catch (error) {
+    console.error('Error transforming Firebase URL:', error);
+    return firebaseUrl;
+  }
+}
+
+app.use(cors());
+app.use(express.json());
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
+app.get("/vendors", async (_req, res) => {
+  try {
+    const searchResult = await index.search('', { limit: 10000 });
+    const vendorsMap = new Map();
+    
+    searchResult.hits.forEach(hit => {
+      if (!vendorsMap.has(hit.vendorId)) {
+        vendorsMap.set(hit.vendorId, {
+          id: hit.vendorId,
+          store_name: hit.vendor_name,
+          store_logo: hit.store_logo
+        });
+      }
+    });
+
+    res.json(Array.from(vendorsMap.values()));
+  } catch (error) {
+    console.error("Error getting vendors:", error);
+    res.status(500).json({ error: "Failed to fetch vendors" });
+  }
+});
+
+app.use((_req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
+app.use((err, _req, res, _next) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: 'Internal Server Error',
+    message: err.message 
+  });
+});
+
+
+app.get("/vendors/:vendorId", async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const searchResult = await index.search('', {
+      limit: 10000
+    });
+    
+    const vendor = searchResult.hits.find(hit => hit.vendorId === vendorId);
+    
+    if (!vendor) {
+      return res.status(404).json({ error: "Vendor not found" });
+    }
+    
+    res.json({
+      id: vendor.vendorId,
+      store_name: vendor.vendor_name,
+      store_logo: vendor.store_logo
+    });
+  } catch (error) {
+    console.error("Error getting vendor:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.get("/vendors/:vendorId/categories", async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    const searchResult = await index.search('', {
+      limit: 10000
+    });
+    
+    const categoriesMap = new Map();
+    searchResult.hits.forEach(hit => {
+      if (hit.vendorId === vendorId && !categoriesMap.has(hit.categoryId)) {
+        categoriesMap.set(hit.categoryId, {
+          id: hit.categoryId,
+          category_name: hit.category_name
+        });
+      }
+    });
+
+    const categories = Array.from(categoriesMap.values());
+    res.json(categories);
+  } catch (error) {
+    console.error("Error getting categories:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.get("/vendors/:vendorId/categories/:categoryId/products", async (req, res) => {
+  try {
+    const { vendorId, categoryId } = req.params;
+    const searchResult = await index.search('', {
+      limit: 10000
+    });
+    
+    const products = searchResult.hits
+      .filter(hit => hit.vendorId === vendorId && hit.categoryId === categoryId)
+      .map(hit => ({
+        id: hit.productId,
+        productId: hit.productId,
+        product_name: hit.product_name,
+        price: hit.price,
+        description: hit.description,
+        discount: hit.discount,
+        details: hit.details,
+        tier_pricing: hit.tier_pricing,
+       product_images: (hit.product_images || []).map(imgUrl => transformFirebaseUrlToImageKit(imgUrl)),
+        mobile_number: hit.mobile_number,
+        isAvailable: hit.isAvailable,
+        moq: hit.moq,
+        added_at: hit.added_at
+      }));
+    
+    res.json(products);
+  } catch (error) {
+    console.error("Error getting products:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.get("/categories", async (_req, res) => {
+  try {
+    const searchResult = await index.search('', { limit: 10000 });
+
+    const categorySet = new Set();
+
+    searchResult.hits.forEach(hit => {
+      if (hit.category_name) {
+        categorySet.add(hit.category_name.trim());
+      }
+    });
+
+    const categories = Array.from(categorySet).sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+    res.json(categories);
+  } catch (error) {
+    console.error("Error getting global categories:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.get("/products", async (_req, res) => {
+  try {
+    const searchResult = await index.search('', {
+      limit: 10000
+    });
+    
+    const products = searchResult.hits.map(hit => ({
+      id: hit.productId,
+      productId: hit.productId,
+      product_name: hit.product_name,
+      price: hit.price,
+      description: hit.description,
+      discount: hit.discount,
+      details: hit.details,
+      tier_pricing: hit.tier_pricing,
+      product_images: (hit.product_images || []).map(imgUrl => transformFirebaseUrlToImageKit(imgUrl)),
+      mobile_number: hit.mobile_number,
+      isAvailable: hit.isAvailable,
+      moq: hit.moq,
+      added_at: hit.added_at,
+      vendorId: hit.vendorId,
+      vendorName: hit.vendor_name,
+      categoryId: hit.categoryId,
+      categoryName: hit.category_name,
+    }));
+    
+    res.json(products);
+  } catch (error) {
+    console.error("Error getting all products:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.get("/vendors/:vendorId/products", async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+    
+    const searchResult = await index.search('', {
+      limit: 10000
+    });
+  
+    const products = searchResult.hits
+      .filter(hit => hit.vendorId === vendorId)
+      .map(hit => ({
+        id: hit.productId,
+        productId: hit.productId,
+        product_name: hit.product_name,
+        price: hit.price,
+        description: hit.description,
+        discount: hit.discount,
+        details: hit.details,
+        tier_pricing: hit.tier_pricing,
+       product_images: (hit.product_images || []).map(imgUrl => transformFirebaseUrlToImageKit(imgUrl)),
+        mobile_number: hit.mobile_number,
+        isAvailable: hit.isAvailable,
+        moq: hit.moq,
+        added_at: hit.added_at,
+        categoryId: hit.categoryId,
+        categoryName: hit.category_name,
+        vendorName: hit.vendor_name,
+      }));
+    
+    if (products.length === 0) {
+      return res.status(404).json({ error: "Vendor not found" });
+    }
+    
+    res.json(products);
+  } catch (error) {
+    console.error("Error getting vendor products:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+
+app.get("/vendors/:vendorId/subscriptions", async (_req, res) => {
+  try {
+    res.json([]);
+  } catch (error) {
+    console.error("Error getting subscriptions:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+
+app.post("/vendors/:vendorId/categories/:categoryId/products", async (req, res) => {
+  try {
+    const { vendorId, categoryId } = req.params;
+    const productId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const productData = {
+      productId: productId,
+      vendorId: vendorId,
+      categoryId: categoryId,
+      ...req.body,
+      added_at: new Date().toISOString(),
+      isAvailable: true,
+    };
+    
+    await index.addDocuments([productData]);
+    
+    res.status(201).json({
+      id: productId,
+      productId: productId,
+      message: "Product added successfully",
+    });
+  } catch (error) {
+    console.error("Error adding product:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.put("/vendors/:vendorId/categories/:categoryId/products/:productId", async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    const searchResult = await index.search('', {
+      limit: 10000
+    });
+    
+    const existingProduct = searchResult.hits.find(hit => hit.productId === productId);
+    
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    
+    const updatedProduct = {
+      ...existingProduct,
+      ...req.body,
+      productId: productId 
+    };
+    
+    await index.addDocuments([updatedProduct]);
+    
+    res.json({ message: "Product updated successfully" });
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.delete("/vendors/:vendorId/categories/:categoryId/products/:productId", async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    await index.deleteDocument(productId);
+    
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+
+app.get("/search", async (req, res) => {
+  try {
+    const { q, limit = 10000, offset = 0, category, vendor, minPrice, maxPrice, inStock, sortBy } = req.query;
+    
+    const searchOptions = {
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    };
+
+    const filters = [];
+    
+    if (category) {
+      filters.push(`category_name = "${category}"`);
+    }
+    
+    if (vendor) {
+      filters.push(`vendorId = "${vendor}"`);
+    }
+    
+    if (minPrice || maxPrice) {
+      const priceFilter = [];
+      if (minPrice) priceFilter.push(`price >= ${minPrice}`);
+      if (maxPrice) priceFilter.push(`price <= ${maxPrice}`);
+      filters.push(priceFilter.join(' AND '));
+    }
+    
+    if (inStock === 'true') {
+      filters.push(`isAvailable = true`);
+    }
+    
+    if (filters.length > 0) {
+      searchOptions.filter = filters;
+    }
+
+
+    if (sortBy) {
+      switch(sortBy) {
+        case 'price-asc':
+          searchOptions.sort = ['price:asc'];
+          break;
+        case 'price-desc':
+          searchOptions.sort = ['price:desc'];
+          break;
+        case 'newest':
+          searchOptions.sort = ['added_at:desc'];
+          break;
+        case 'discount':
+          searchOptions.sort = ['discount:desc'];
+          break;
+      }
+    }
+
+    const searchResult = await index.search(q || '', searchOptions);
+    
+    const products = searchResult.hits.map(hit => ({
+      id: hit.productId,
+      productId: hit.productId,
+      product_name: hit.product_name,
+      price: hit.price,
+      description: hit.description,
+      discount: hit.discount,
+      details: hit.details,
+      tier_pricing: hit.tier_pricing,
+      product_images: (hit.product_images || []).map(imgUrl => transformFirebaseUrlToImageKit(imgUrl)),
+      mobile_number: hit.mobile_number,
+      isAvailable: hit.isAvailable,
+      moq: hit.moq,
+      added_at: hit.added_at,
+      vendorId: hit.vendorId,
+      vendorName: hit.vendor_name,
+      categoryId: hit.categoryId,
+      categoryName: hit.category_name,
+    }));
+    
+    res.json({
+      hits: products,
+      totalHits: searchResult.totalHits,
+      totalPages: Math.ceil(searchResult.totalHits / parseInt(limit)),
+      currentPage: Math.floor(parseInt(offset) / parseInt(limit)) + 1
+    });
+  } catch (error) {
+    console.error("Error searching products:", error);
+    res.status(500).send("Server error");
+  }
+});
+
+
+app.get("/products/category/:categoryName", async (req, res) => {
+  try {
+    const { categoryName } = req.params;
+    
+    const searchResult = await index.search('', {
+      filter: [`categoryName = "${categoryName}"`],
+      limit: 10000
+    });
+
+    const products = searchResult.hits.map(hit => ({
+      id: hit.productId,
+      productId: hit.productId,
+      product_name: hit.product_name,
+      price: hit.price,
+      description: hit.description,
+      discount: hit.discount,
+      details: hit.details,
+      tier_pricing: hit.tier_pricing,
+      product_images: (hit.product_images || []).map(imgUrl => transformFirebaseUrlToImageKit(imgUrl)),
+      mobile_number: hit.mobile_number,
+      isAvailable: hit.isAvailable,
+      moq: hit.moq,
+      added_at: hit.added_at,
+      vendorId: hit.vendorId,
+      vendorName: hit.vendor_name,
+      categoryId: hit.categoryId,
+      categoryName: hit.category_name
+    }));
+    
+    res.json(products);
+  } catch (error) {
+    console.error("Error getting category products:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+app.get('/products/:id', async (req, res) => {
+  try {
+    const searchResult = await index.search('', {
+      filter: `productId = "${req.params.id}"`,
+      limit: 10000
+    });
+    
+    if (searchResult.hits.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    const product = searchResult.hits[0];
+    res.json({
+      id: product.productId,
+      productId: product.productId,
+      product_name: product.product_name,
+      price: product.price,
+      description: product.description,
+      discount: product.discount,
+      details: product.details,
+      tier_pricing: product.tier_pricing,
+      product_images: (product.product_images || []).map(imgUrl => transformFirebaseUrlToImageKit(imgUrl)),
+      mobile_number: product.mobile_number,
+      isAvailable: product.isAvailable,
+      moq: product.moq,
+      added_at: product.added_at,
+      vendorId: product.vendorId,
+      vendorName: product.vendor_name,
+      categoryId: product.categoryId,
+      categoryName: product.category_name
+    });
+  } catch (error) {
+    console.error("Error getting product:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get('/products', async (_req, res) => {
+  try {
+    
+     const searchResult = await index.search('', {
+      limit: 10000 
+    });
+
+    const products = searchResult.hits.map(hit => ({
+      id: hit.productId,
+      productId: hit.productId,
+      product_name: hit.product_name,
+      price: hit.price,
+      description: hit.description,
+      discount: hit.discount,
+      details: hit.details,
+      tier_pricing: hit.tier_pricing,
+      product_images: (hit.product_images || []).map(imgUrl => transformFirebaseUrlToImageKit(imgUrl)),
+      mobile_number: hit.mobile_number,
+      isAvailable: hit.isAvailable,
+      moq: hit.moq,
+      added_at: hit.added_at,
+      vendorId: hit.vendorId,
+      vendorName: hit.vendor_name,
+      categoryId: hit.categoryId,
+      categoryName: hit.category_name
+    }));
+    
+    res.json({
+      products,
+      total: searchResult.totalHits
+    });
+  } catch (error) {
+    console.error("Error getting products:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log('\n📋 Available endpoints:');
+  console.log('   GET  /health - Server health check');
+  console.log('   GET  /vendors - Get all vendor stores');
+  console.log('   GET  /vendors/:vendorId - Get specific vendor');
+  console.log('   GET  /vendors/:vendorId/categories - Get vendor categories');
+  console.log('   GET  /vendors/:vendorId/categories/:categoryId/products - Get category products');
+  console.log('   GET  /products - Get all products from all vendors');
+  console.log('   GET  /search - Search products with filters');
+  console.log('   POST /vendors/:vendorId/categories/:categoryId/products - Add new product');
+  console.log('   PUT  /vendors/:vendorId/categories/:categoryId/products/:productId - Update product');
+  console.log('   DELETE /vendors/:vendorId/categories/:categoryId/products/:productId - Delete product');
+});
+
+================================================================================
+
+FILE 2: C:\src\Bhaba_com\bhaba-marketplace\src\components\BottomNavigation.tsx
+================================================================================
+
+// components/BottomNavigation.tsx
+import React from 'react';
+import Link from 'next/link';
+import { Home, ShoppingBag, User, Box } from 'lucide-react';
+
+interface BottomNavigationProps {
+  onWholesaleClick: () => void;
+}
+
+
+const BottomNavigation: React.FC<BottomNavigationProps> = ({ onWholesaleClick }) => {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-500 to-purple-600 border-t border-white/20 shadow-lg z-50">
+      <div className="flex justify-around items-center py-2">
+        <Link href="/" className="flex flex-col items-center p-2 text-white hover:text-gray-200">
+          <Home className="h-6 w-6" />
+          <span className="text-xs mt-1">Home</span>
+        </Link>
+        
+        <button 
+          onClick={onWholesaleClick}
+          className="flex flex-col items-center p-2 text-white hover:text-gray-200"
+        >
+          <Box className="h-6 w-6" />
+          <span className="text-xs mt-1">Wholesale</span>
+        </button>
+        
+        <button className="flex flex-col items-center p-2 text-white hover:text-gray-200">
+          <ShoppingBag className="h-6 w-6" />
+          <span className="text-xs mt-1">Cart</span>
+        </button>
+        
+        <Link href="/account" className="flex flex-col items-center p-2 text-white hover:text-gray-200">
+          <User className="h-6 w-6" />
+          <span className="text-xs mt-1">Account</span>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+export default BottomNavigation
+
+================================================================================
+
+FILE 3: C:\src\Bhaba_com\bhaba-marketplace\src\components\DynamicAspectRatioImage.tsx
+================================================================================
+import React, { useEffect, useState } from 'react'
+import Image from 'next/image'
+
+type ImageUrl = string | string[]
+
+interface AspectRatioImageProps {
+  imageUrl: ImageUrl
+  className?: string
+  containerClassName?: string
+}
+
+interface AspectRatioData {
+  url: string
+  aspectRatio: number
+  error: boolean
+}
+
+const DynamicAspectRatioImage: React.FC<AspectRatioImageProps> = ({ 
+  imageUrl,
+  className = 'object-cover rounded',
+  containerClassName = ''
+}) => {
+  const [images, setImages] = useState<AspectRatioData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [defaultAspectRatio] = useState(1) // Default square aspect ratio
+
+  useEffect(() => {
+    const urls = typeof imageUrl === 'string' ? [imageUrl] : imageUrl
+
+    const loadImage = (url: string): Promise<AspectRatioData> => {
+      return new Promise((resolve) => {
+        const img = new window.Image()
+        img.src = url
+
+        img.onload = () => {
+          const aspectRatio = img.naturalWidth / img.naturalHeight
+          resolve({ url, aspectRatio, error: false })
+        }
+
+        img.onerror = () => {
+          resolve({ url, aspectRatio: defaultAspectRatio, error: true })
+        }
+      })
+    }
+
+    const timer = setTimeout(() => {
+      Promise.all(urls.map(loadImage)).then((results) => {
+        setImages(results)
+        setLoading(false)
+      })
+    }, 0) // Using setTimeout to prevent blocking the main thread
+
+    return () => clearTimeout(timer)
+  }, [imageUrl, defaultAspectRatio])
+
+  if (loading) {
+    return (
+      <div 
+        className={`relative bg-gray-100 animate-pulse ${containerClassName}`}
+        style={{ aspectRatio: defaultAspectRatio }}
+      >
+        <div className="absolute inset-0 flex justify-center items-center">
+          <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {images.map((img, index) => (
+        <div
+          key={index}
+          className={`relative ${containerClassName}`}
+          style={{ aspectRatio: img.aspectRatio }}
+        >
+          {img.error ? (
+            <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-500 text-sm">
+              Image failed to load
+            </div>
+          ) : (
+            <Image
+              src={img.url}
+              alt={`dynamic-img-${index}`}
+              fill
+              className={className}
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.onerror = null
+                target.src = '/placeholder-image.jpg'
+              }}
+            />
+          )}
+        </div>
+      ))}
+    </>
+  )
+}
+
+export default React.memo(DynamicAspectRatioImage)
+
+================================================================================
+
+FILE 4: C:\src\Bhaba_com\bhaba-marketplace\src\components\FilterModal.tsx
+================================================================================
+// src/components/FilterModal.tsx
+import React from 'react'
+import { X } from 'lucide-react'
+
+interface Vendor {
+  id: string
+  store_name: string
+  store_logo: string
+}
+
+interface Category {
+  id: string
+  category_name: string
+}
+
+interface Filters {
+  categories: string[]
+  vendors: string[]
+  priceRange: [number, number]
+  inStock: boolean
+}
+
+interface FilterModalProps {
+  isOpen: boolean
+  onClose: () => void
+  categories: Category[]
+  vendors: Vendor[]
+  filters: Filters
+  onFiltersChange: (filters: Filters) => void
+}
+
+const FilterModal: React.FC<FilterModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  categories, 
+  vendors, 
+  filters, 
+  onFiltersChange 
+}) => {
+  if (!isOpen) return null
+
+  const handleCategoryChange = (categoryId: string) => {
+    const newCategories = filters.categories.includes(categoryId)
+      ? filters.categories.filter(id => id !== categoryId)
+      : [...filters.categories, categoryId]
+    
+    onFiltersChange({ ...filters, categories: newCategories })
+  }
+
+  const handleVendorChange = (vendorId: string) => {
+    const newVendors = filters.vendors.includes(vendorId)
+      ? filters.vendors.filter(id => id !== vendorId)
+      : [...filters.vendors, vendorId]
+    
+    onFiltersChange({ ...filters, vendors: newVendors })
+  }
+
+  const clearFilters = () => {
+    onFiltersChange({
+      categories: [],
+      vendors: [],
+      priceRange: [0, 10000000],
+      inStock: false
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+      {/* ... rest of your JSX remains the same ... */}
+        <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Filters</h2>
+          <button
+            onClick={onClose}
+            className="p-1 sm:p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="h-5 w-5 sm:h-6 sm:w-6" />
+          </button>
+        </div>
+        
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+          
+          {/* Categories */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3">Categories</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {categories.map((category) => (
+                <label key={category.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={filters.categories.includes(category.id)}
+                    onChange={() => handleCategoryChange(category.id)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-xs sm:text-sm text-gray-700">{category.category_name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          {/* Vendors */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3">Vendors</h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {vendors.map((vendor) => (
+                <label key={vendor.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={filters.vendors.includes(vendor.id)}
+                    onChange={() => handleVendorChange(vendor.id)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-xs sm:text-sm text-gray-700">{vendor.store_name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          {/* Price Range */}
+          <div>
+  <h3 className="font-semibold text-gray-900 mb-2 sm:mb-3">Price Range (TZS)</h3>
+  <div className="space-y-2 sm:space-y-3">
+    <div className="flex gap-2">
+      <input
+        type="number"
+        placeholder="Min"
+        value={filters.priceRange[0]}
+        onChange={(e) => onFiltersChange({
+          ...filters,
+          priceRange: [parseInt(e.target.value) || 0, filters.priceRange[1]]
+        })}
+        className="flex-1 px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm"
+      />
+      <span className="flex items-center">to</span>
+      <input
+        type="number"
+        placeholder="Max"
+        value={filters.priceRange[1]}
+        onChange={(e) => onFiltersChange({
+          ...filters,
+          priceRange: [filters.priceRange[0], parseInt(e.target.value) || 10000000]
+        })}
+        className="flex-1 px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm"
+      />
+    </div>
+    <div className="px-2">
+      <input
+        type="range"
+        min="0"
+        max="10000000"
+        step="1000"
+        value={filters.priceRange[0]}
+        onChange={(e) => onFiltersChange({
+          ...filters,
+          priceRange: [parseInt(e.target.value), filters.priceRange[1]]
+        })}
+        className="w-full"
+      />
+      <input
+        type="range"
+        min="0"
+        max="10000000"
+        step="1000"
+        value={filters.priceRange[1]}
+        onChange={(e) => onFiltersChange({
+          ...filters,
+          priceRange: [filters.priceRange[0], parseInt(e.target.value)]
+        })}
+        className="w-full"
+      />
+    </div>
+  </div>
+</div>
+          
+          {/* Stock Status */}
+          <div>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={filters.inStock}
+                onChange={(e) => onFiltersChange({ ...filters, inStock: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-xs sm:text-sm text-gray-700">In Stock Only</span>
+            </label>
+          </div>
+          
+          <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4">
+            <button
+              onClick={clearFilters}
+              className="flex-1 bg-gray-200 text-gray-800 py-2 px-3 sm:px-4 rounded-md hover:bg-gray-300 transition-colors text-xs sm:text-sm"
+            >
+              Clear All
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 bg-blue-500 text-white py-2 px-3 sm:px-4 rounded-md hover:bg-blue-600 transition-colors text-xs sm:text-sm"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default FilterModal
+
+================================================================================
+
+FILE 5: C:\src\Bhaba_com\bhaba-marketplace\src\components\Footer.tsx
+================================================================================
+import React from 'react'
+import Link from 'next/link'
+
+const Footer: React.FC = () => {
+  return (
+    <footer className="bg-gray-800 text-white py-8 mt-16">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Bhaba Marketplace</h3>
+            <p className="text-gray-300 text-sm">
+              Your trusted online marketplace for quality products in Tanzania.
+            </p>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" className="text-gray-300 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms-of-service" className="text-gray-300 hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
+            <div className="text-sm text-gray-300 space-y-2">
+              <p>Email: info@bhabalimited.com</p>
+              <p>Phone: +255 618 205 278</p>
+              <p>Dar es Salaam, Tanzania</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="border-t border-gray-700 mt-8 pt-6 text-center">
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} Bhaba Limited. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+export default Footer
+
+================================================================================
+
+FILE 6: C:\src\Bhaba_com\bhaba-marketplace\src\components\HeaderBar.tsx
+================================================================================
+
+// src/components/HeaderBar.tsx
+import React, { useState } from 'react'
+import { Search, Filter, Grid, List, ChevronLeft, ArrowUpDown } from 'lucide-react'
+import Head from 'next/head'
+import Image from 'next/image'
+import Link from 'next/link'
+
+interface HeaderBarProps {
+  searchQuery?: string
+  setSearchQuery?: (query: string) => void
+  viewMode?: 'grid' | 'list'
+  setViewMode?: (mode: 'grid' | 'list') => void
+  setShowFilters?: (show: boolean) => void
+  sortOption?: string
+  setSortOption?: (option: string) => void
+  showBackButton?: boolean
+  onBack?: () => void
+  showSearch?: boolean
+  showViewToggle?: boolean
+  showSort?: boolean
+  showFilter?: boolean
+}
+
+const HeaderBar: React.FC<HeaderBarProps> = ({ 
+  searchQuery = '', 
+  setSearchQuery = () => {}, 
+  viewMode = 'grid', 
+  setViewMode = () => {}, 
+  setShowFilters = () => {},
+  sortOption = 'relevance',
+  setSortOption = () => {},
+  showBackButton = false,
+  onBack = () => {},
+  showSearch = true,
+  showViewToggle = true,
+  showSort = true,
+  showFilter = true
+}) => {
+  const [showSortPopup, setShowSortPopup] = useState(false)
+
+  const sortOptions = [
+    { value: 'relevance', label: 'Relevance' },
+    { value: 'price-asc', label: 'Price: Low to High' },
+    { value: 'price-desc', label: 'Price: High to Low' },
+    { value: 'newest', label: 'Newest' },
+    { value: 'discount', label: 'Best Discount' }
+  ]
+
+  const handleSortChange = (option: string) => {
+    setSortOption(option)
+    setShowSortPopup(false)
+  }
+
+  return (
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      </Head>
+      <header className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Left side - back button, logo and title */}
+            <div className="flex items-center flex-shrink-0">
+              {showBackButton && (
+                <button
+                  onClick={onBack}
+                  className="mr-2 p-1 text-white hover:text-gray-200 hover:bg-white/10 rounded-md transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+              )}
+              <Link href="/" className="flex items-center">
+                {/* <div className="relative h-8 w-8 mr-2">
+                  <Image 
+                    src="/Bhaba_logo.png"
+                    alt="Bhaba Logo"
+                    fill
+                    className="object-contain"
+                  />
+                </div> */}
+
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 mr-2 transition-all duration-300 ease-in-out">
+  <Image 
+    src="/Bhaba_logo.png"
+    alt="Bhaba Logo"
+    layout="fill"
+    objectFit="contain"
+    className="rounded-md"
+    priority
+  />
+</div>
+
+
+                <h1 className="text-lg sm:text-xl font-bold text-white whitespace-nowrap truncate max-w-[120px] sm:max-w-none">
+                  Bhaba
+                </h1>
+              </Link>
+            </div>
+            
+{/* Center - search bar */}
+{showSearch && (
+  <div className="flex-1 mx-2 sm:mx-4 min-w-0">
+    <div className="relative max-w-2xl mx-auto">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <input
+        type="text"
+        placeholder="Search..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full pl-9 pr-3 py-1 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+      />
+    </div>
+  </div>
+)}
+
+{/* Right side - actions */}
+<div className="flex items-center gap-1 sm:gap-2">
+  {/* Sort dropdown - desktop */}
+  {showSort && (
+    <>
+      <div className="hidden sm:block">
+        <select
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+          className="text-xs sm:text-sm border border-gray-300 rounded-md px-1 sm:px-2 py-1 focus:ring-blue-500 focus:border-blue-500"
+        >
+          {sortOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Sort button - mobile */}
+      <div className="sm:hidden relative">
+        <button
+          onClick={() => setShowSortPopup(!showSortPopup)}
+          className="p-1 sm:p-2 text-white hover:text-gray-200 hover:bg-white/10 rounded-md transition-colors"
+          title="Sort options"
+        >
+          <ArrowUpDown className="h-4 w-4 sm:h-5 sm:w-5" />
+        </button>
+
+        {showSortPopup && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 py-1">
+            {sortOptions.map(option => (
+              <button
+                key={option.value}
+                onClick={() => handleSortChange(option.value)}
+                className={`block w-full text-left px-4 py-2 text-sm ${
+                  sortOption === option.value
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  )}
+  
+  {/* Filter button */}
+  {showFilter && (
+    <button
+      onClick={() => setShowFilters(true)}
+      className="p-1 sm:p-2 text-white hover:text-gray-200 hover:bg-white/10 rounded-md transition-colors"
+      title="Filters"
+    >
+      <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
+    </button>
+  )}
+  
+  {/* View toggle */}
+  {showViewToggle && (
+    <button
+      onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+      className="p-1 sm:p-2 text-white hover:text-gray-200 hover:bg-white/10 rounded-md transition-colors"
+      title={`Switch to ${viewMode === 'grid' ? 'list' : 'grid'} view`}
+    >
+      {viewMode === 'grid' ? (
+        <List className="h-4 w-4 sm:h-5 sm:w-5" />
+      ) : (
+        <Grid className="h-4 w-4 sm:h-5 sm:w-5" />
+      )}
+    </button>
+  )}
+</div>
+          </div>
+        </div>
+      </header>
+    </>
+  )
+}
+
+export default HeaderBar
+
+================================================================================
+
+FILE 7: C:\src\Bhaba_com\bhaba-marketplace\src\components\LazyImage.tsx
+================================================================================
+import { useState } from 'react'
+import Image from 'next/image'
+import { AlertCircle } from 'lucide-react'
+
+interface LazyImageProps {
+  src: string
+  alt: string
+  width: number
+  height: number
+  className?: string
+}
+
+const LazyImage: React.FC<LazyImageProps> = ({ src, alt, width, height, className }) => {
+  const [hasError, setHasError] = useState(false)
+
+  if (hasError) {
+    return (
+      <div className={`${className} bg-gray-100 flex items-center justify-center`}>
+        <div className="text-center p-4">
+          <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Image not available</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  )
+}
+
+export default LazyImage
+
+================================================================================
+
+FILE 8: C:\src\Bhaba_com\bhaba-marketplace\src\components\LoadingOverlay.tsx
+================================================================================
+// components/LoadingOverlay.tsx
+import React from 'react'
+
+const LoadingOverlay = () => {
+  return (
+    <div className="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center">
+      <div className="flex space-x-2">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="w-4 h-4 rounded-full animate-bounce"
+            style={{
+              backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'][i],
+              animationDelay: `${i * 0.1}s`
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default LoadingOverlay
+
+================================================================================
+
+FILE 9: C:\src\Bhaba_com\bhaba-marketplace\src\components\ProductCard.tsx
+================================================================================
+// src/components/ProductCard.tsx
+
+
+import React from 'react'
+import { Phone, MessageCircle } from 'lucide-react'
+//import Image from 'next/image'
+import { formatCurrency } from '@/utils/formatCurrency'
+import { useRouter } from 'next/router'
+import { slugify } from '@/utils/api'
+import DynamicAspectRatioImage from './DynamicAspectRatioImage'  // adjust the path if needed
+
+
+interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+interface ProductCardProps {
+  product: Product
+  onClick?: (product: Product) => void
+  viewMode?: 'grid' | 'list'
+}
+
+// const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, viewMode = 'grid' }) => {
+  const ProductCard: React.FC<ProductCardProps> = React.memo(({ product, onClick, viewMode = 'grid' }) => {
+  const router = useRouter()
+  const discountedPrice = product.discount > 0 
+    ? product.price * (1 - product.discount / 100) 
+    : product.price
+
+
+    const handleContactVendor = (e: React.MouseEvent, type: 'whatsapp' | 'call') => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    // Hardcoded number - will always use this regardless of product.mobile_number
+    const hardcodedNumber = '0618205278';
+    
+    const productImage = product.product_images?.[0] || ''
+    const originalPrice = formatCurrency(product.price)
+    const finalPrice = formatCurrency(discountedPrice)
+    const discountText = product.discount > 0 ? ` (${product.discount}% OFF)` : ''
+    
+    let message = `Hi, I'm interested in your product:\n\n`
+    message += `*Product Name:* ${product.product_name}\n`
+    message += `*Price:* ${finalPrice}${discountText}\n`
+    if (product.discount > 0) {
+      message += `*Original Price:* ${originalPrice}\n`
+    }
+    message += `*Category:* ${product.categoryName}\n`
+    if (product.description) {
+      message += `\n*Description:* ${product.description}\n`
+    }
+    message += `\nPlease let me know more about this product.`
+    
+    try {
+      if (type === 'whatsapp') {
+        if (productImage) {
+          message += `\n\n*Product Image:* ${productImage}`
+        }
+        
+        let cleanNumber = hardcodedNumber.replace(/[^\d+]/g, '')
+        
+        if (cleanNumber.startsWith('+255')) {
+          cleanNumber = cleanNumber.substring(1)
+        } else if (cleanNumber.startsWith('255')) {
+          // Keep as is
+        } else if (cleanNumber.startsWith('0')) {
+          cleanNumber = '255' + cleanNumber.substring(1)
+        } else {
+          cleanNumber = '255' + cleanNumber
+        }
+        
+        const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`
+        window.open(whatsappUrl, '_blank')
+        
+      } else if (type === 'call') {
+        const callUrl = `tel:${hardcodedNumber}`
+        window.location.href = callUrl
+      }
+    } catch (error) {
+      console.error('Error handling contact:', error)
+      alert('Unable to open contact method. Please try again.')
+    }
+  }
+
+
+const handleClick = () => {
+  if (onClick) {
+    onClick(product)
+  } else {
+    const slug = `${slugify(product.product_name)}_${product.id}`
+    router.push(`/product/${product.categoryName.toLowerCase().replace(/\s+/g, '-')}/${slug}`)
+  }
+}
+
+
+  if (viewMode === 'list') {
+    return (
+      <div 
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all duration-300 cursor-pointer flex gap-4 w-full"
+        onClick={handleClick}
+      >
+        {/* Image Container - List View */}
+        <div className="relative w-24 h-24 flex-shrink-0">
+      
+          <DynamicAspectRatioImage imageUrl={product.product_images?.[0] || '/placeholder-image.jpg'} />
+        </div>
+        
+        {/* Product Info - List View */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">{product.product_name}</h3>
+          <p className="text-xs text-gray-600 mb-2">{product.vendorName}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-blue-600">{formatCurrency(discountedPrice)}</span>
+              {product.discount > 0 && (
+                <span className="text-sm text-gray-500 line-through">{formatCurrency(product.price)}</span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => handleContactVendor(e, 'whatsapp')}
+                className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                title="WhatsApp"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => handleContactVendor(e, 'call')}
+                className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                title="Call"
+              >
+                <Phone className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Grid View
+  return (
+    <div 
+      className="bg-gray-10 rounded-lg shadow-sm border border-green-600 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group w-full"
+      onClick={handleClick}
+    >
+      {/* Image Container - Grid View */}
+      <div className="relative aspect-square">
+        {/* <Image
+          {...imageProps}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+        /> */}
+
+        <div className="w-full">
+  <DynamicAspectRatioImage imageUrl={product.product_images?.[0] || '/placeholder-image.jpg'} />
+</div>
+        
+        {/* Discount Badge */}
+        {product.discount > 0 && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
+            -{product.discount}%
+          </div>
+        )}
+        
+        {/* Out of Stock Overlay */}
+        {!product.isAvailable && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <span className="bg-red-500 text-white px-3 py-1 rounded-md text-sm font-semibold">
+              Out of Stock
+            </span>
+          </div>
+        )}
+      </div>
+      
+      {/* Product Info - Grid View */}
+      <div className="p-3 sm:p-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{product.product_name}</h3>
+        <p className="text-xs text-gray-600 mb-2 line-clamp-2 sm:line-clamp-3">
+  {product.description}
+</p>
+
+        <p className="text-xs text-gray-600 mb-2">{product.vendorName}</p>
+        <p className="text-xs text-blue-600 mb-3">{product.categoryName}</p>
+        
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col">
+            <span className="text-base sm:text-lg font-bold text-blue-600">{formatCurrency(discountedPrice)}</span>
+            {product.discount > 0 && (
+              <span className="text-xs sm:text-sm text-gray-500 line-through">{formatCurrency(product.price)}</span>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => handleContactVendor(e, 'whatsapp')}
+            className="flex-1 bg-green-500 text-white py-1 sm:py-2 px-2 sm:px-3 rounded-md hover:bg-green-600 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
+          >
+            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">WhatsApp</span>
+          </button>
+          <button
+            onClick={(e) => handleContactVendor(e, 'call')}
+            className="flex-1 bg-blue-500 text-white py-1 sm:py-2 px-2 sm:px-3 rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
+          >
+            <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Call</span>
+          </button>
+        </div>
+      </div>
+    </div>
+//   )
+// }
+ );
+});
+ProductCard.displayName = 'ProductCard';
+export default ProductCard
+
+================================================================================
+
+
+================================================================================
+
+FILE 11: C:\src\Bhaba_com\bhaba-marketplace\src\pages\_app.tsx
+================================================================================
+// src/pages/_app.tsx
+import Script from 'next/script'
+import Head from 'next/head'
+import '@/styles/globals.css'
+import type { AppProps } from 'next/app'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/router'
+import { Loader2, AlertCircle } from 'lucide-react'
+import { fetchAllProducts, fetchVendors, fetchAllCategories, PaginatedResponse } from '@/utils/api'
+import type { Product, Vendor, Category } from '@/utils/api'
+import Footer from '../components/Footer'
+
+interface ExtendedPageProps {
+  products: PaginatedResponse<Product>
+  vendors: Vendor[]
+  categories: Category[]
+}
+
+
+// Cache for visited product pages
+const visitedProducts = new Set<string>()
+
+function MyApp({ Component, pageProps }: AppProps<ExtendedPageProps>) {
+  const router = useRouter()
+  const [products, setProducts] = useState<PaginatedResponse<Product>>({ data: [], total: 0 })
+  const [vendors, setVendors] = useState<Vendor[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [routeChanging, setRouteChanging] = useState(false)
+  const isBackNavigation = useRef(false)
+
+  // Track navigation history and cache
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      if (url.includes('/product/')) {
+        visitedProducts.add(url)
+      }
+    }
+
+    router.events.on('routeChangeComplete', handleRouteChange)
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange)
+    }
+  }, [router])
+
+  // Handle back/forward navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.onpopstate = () => {
+        isBackNavigation.current = true
+      }
+    }
+  }, [])
+
+  // Route change handlers
+  useEffect(() => {
+    const handleStart = (url: string) => {
+      // Skip loading for back navigation to cached product pages
+      const isCachedProduct = url.includes('/product/') && visitedProducts.has(url)
+      if (isBackNavigation.current && isCachedProduct) {
+        isBackNavigation.current = false
+        return
+      }
+
+      // Show loading for product pages
+      if (url.includes('/product/')) {
+        setRouteChanging(true)
+      }
+    }
+
+    const handleComplete = () => {
+      setRouteChanging(false)
+      isBackNavigation.current = false
+    }
+
+    router.events.on('routeChangeStart', handleStart)
+    router.events.on('routeChangeComplete', handleComplete)
+    router.events.on('routeChangeError', handleComplete)
+
+    return () => {
+      router.events.off('routeChangeStart', handleStart)
+      router.events.off('routeChangeComplete', handleComplete)
+      router.events.off('routeChangeError', handleComplete)
+    }
+  }, [router])
+
+  // Initial data fetch
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [productsData, vendorsData, categoriesData] = await Promise.all([
+          fetchAllProducts(),
+          fetchVendors(),
+          fetchAllCategories()
+        ])
+
+        setProducts(productsData)
+        setVendors(vendorsData)
+        setCategories(categoriesData)
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message)
+        } else {
+          setError('An unexpected error occurred.')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+useEffect(() => {
+  const handleRouteChange = (url: string) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('config', 'G-5EXTZ4D9MW', {
+        page_path: url,
+      })
+    }
+  }
+
+  router.events.on('routeChangeComplete', handleRouteChange)
+  return () => {
+    router.events.off('routeChangeComplete', handleRouteChange)
+  }
+}, [router])
+
+
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="text-center space-y-6 animate-fade-in">
+          <div className="relative inline-flex items-center justify-center">
+            <div className="absolute w-24 h-24 rounded-full border-4 border-blue-200 animate-spin-slow"></div>
+            <Loader2 className="h-16 w-16 text-blue-600 animate-spin" />
+            <div className="absolute w-4 h-4 bg-blue-600 rounded-full"></div>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-800">Loading Your Experience</h2>
+            <p className="text-blue-600">Curating the best products for you</p>
+          </div>
+          <div className="flex justify-center space-x-2">
+            {[...Array(3)].map((_, i) => (
+              <div 
+                key={i}
+                className="w-3 h-3 bg-blue-400 rounded-full animate-bounce"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="p-6 text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {/* We hit a snag */}
+              </h3>
+            {/* <p className="text-gray-600 mb-6">{error}</p> */}
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-150"
+            >
+              {/* Try Again */}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const extendedPageProps: ExtendedPageProps = {
+    ...pageProps,
+    products,
+    vendors,
+    categories
+  }
+
+  return (
+    <>
+      <Head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="description" content="Bhaba Marketplace - Shop online in Tanzania for electronics, clothing, shoes and more at wholesale prices" />
+        <link rel="icon" href="/Bhaba_logo.png" />
+      </Head>
+      
+      <Script
+  strategy="afterInteractive"
+  src="https://www.googletagmanager.com/gtag/js?id=G-5EXTZ4D9MW"
+/>
+<Script
+  id="ga4-init"
+  strategy="afterInteractive"
+  dangerouslySetInnerHTML={{
+    __html: `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-5EXTZ4D9MW', {
+        page_path: window.location.pathname,
+      });
+    `
+  }}
+/>
+
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-blue-50 pb-16 relative overflow-x-hidden">
+        {/* Route changing overlay - only shows for uncached navigation */}
+        {routeChanging && (
+          <div className="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center">
+            <div className="flex flex-col items-center">
+              <div className="flex space-x-2 mb-4">
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-4 h-4 rounded-full animate-bounce"
+                    style={{
+                      backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'][i],
+                      animationDelay: `${i * 0.1}s`
+                    }}
+                  />
+                ))}
+              </div>
+              <p className="text-gray-600">Loading product details...</p>
+            </div>
+          </div>
+        )}
+        
+        <Component {...extendedPageProps} />
+         <Footer />
+      </div>
+    </>
+  )
+}
+
+export default MyApp
+
+================================================================================
+
+FILE 12: C:\src\Bhaba_com\bhaba-marketplace\src\pages\account.tsx
+================================================================================
+import React from 'react'
+import Head from 'next/head'
+import HeaderBar from '../components/HeaderBar'
+import Link from 'next/link'
+import { User, Shield, FileText, LogOut } from 'lucide-react'
+
+const Account: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>Account | Bhaba Marketplace</title>
+        <meta name="description" content="Your Bhaba Marketplace account" />
+      </Head>
+
+      <HeaderBar 
+        showBackButton={true}
+        showSearch={false}
+        showViewToggle={false}
+        showSort={false}
+        showFilter={false}
+        onBack={() => window.history.back()}
+      />
+
+      <main className="max-w-2xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          {/* Profile Header */}
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <User className="h-8 w-8" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold">Welcome!</h1>
+                <p className="text-blue-100">Manage your account settings</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Account Options */}
+          <div className="p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h2>
+            
+            <Link 
+              href="/privacy-policy"
+              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <Shield className="h-5 w-5 text-blue-600" />
+                <span className="text-gray-900">Privacy Policy</span>
+              </div>
+              <span className="text-gray-400">→</span>
+            </Link>
+
+            <Link 
+              href="/terms-of-service"
+              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <FileText className="h-5 w-5 text-green-600" />
+                <span className="text-gray-900">Terms of Service</span>
+              </div>
+              <span className="text-gray-400">→</span>
+            </Link>
+
+          
+
+<Link 
+  href="/privacy-policy-full"
+  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+>
+  <div className="flex items-center space-x-3">
+    <Shield className="h-5 w-5 text-purple-600" />
+    <span className="text-gray-900">Full Privacy Policy</span>
+  </div>
+  <span className="text-gray-400">→</span>
+</Link>
+
+<Link 
+  href="/terms-of-service-full"
+  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+>
+  <div className="flex items-center space-x-3">
+    <FileText className="h-5 w-5 text-orange-600" />
+    <span className="text-gray-900">Full Terms of Service</span>
+  </div>
+  <span className="text-gray-400">→</span>
+</Link>
+
+            {/* Logout Button */}
+            <button className="w-full flex items-center justify-center space-x-2 p-4 text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-8">
+              <LogOut className="h-5 w-5" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Support Information */}
+        <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
+          <div className="space-y-2 text-sm text-gray-600">
+            <p>Email: support@bhabalimited.com</p>
+            <p>Phone: +255 618 205 278</p>
+            <p>Available 24/7 for your inquiries</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default Account
+
+================================================================================
+
+FILE 13: C:\src\Bhaba_com\bhaba-marketplace\src\pages\category\[category].tsx
+================================================================================
+
+import { useRouter } from 'next/router'
+import React, { useState, useEffect, useMemo } from 'react'
+import Head from 'next/head'
+import { Loader2 } from 'lucide-react'
+import ProductCard from '../../components/ProductCard'
+import HeaderBar from '../../components/HeaderBar'
+import { fetchWithRetry, SearchResult } from '../../utils/api'
+import type { NextPage } from 'next'
+import { Product } from '../../utils/api'
+import { slugify } from '../../utils/api'
+
+// Use a consistent API base URL
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://bhababackend.onrender.com'
+//  const API_BASE = "https://bhababackend.onrender.com"
+
+interface CategoryPageProps {
+  initialProducts: Product[]
+}
+
+const CategoryPage: NextPage<CategoryPageProps> = ({ initialProducts = [] }) => {
+  const router = useRouter()
+  const { category } = router.query
+  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [loading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [sortOption, setSortOption] = useState('relevance')
+  const [, setShowFilters] = useState(false)
+
+  useEffect(() => {
+    if (category && (!initialProducts || initialProducts.length === 0)) {
+      const fetchCategoryProducts = async () => {
+        setLoading(true);
+        try {
+          const categoryName = typeof category === 'string' 
+            ? category.replace(/-/g, ' ')
+            : '';
+          
+          const response = await fetchWithRetry<SearchResult>(
+            `${API_BASE}/search?category=${encodeURIComponent(categoryName)}`
+          );
+          
+          setProducts(Array.isArray(response?.hits) ? response.hits : []);
+        } catch (error) {
+          console.error('Error fetching category products:', error);
+          setProducts([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchCategoryProducts();
+    }
+  }, [category, initialProducts]);
+
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return []
+    if (!searchQuery) return products
+    
+    return products.filter(product => 
+      product?.product_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product?.vendorName?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [products, searchQuery])
+
+  const sortedProducts = useMemo(() => {
+    if (!Array.isArray(filteredProducts)) return []
+    
+    const productsToSort = [...filteredProducts]
+    
+    switch(sortOption) {
+      case 'price-asc':
+        return productsToSort.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceA - priceB
+        })
+      case 'price-desc':
+        return productsToSort.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceB - priceA
+        })
+      case 'newest':
+        return productsToSort.sort((a, b) => 
+          new Date(b.added_at).getTime() - new Date(a.added_at).getTime()
+        )
+      case 'discount':
+        return productsToSort.sort((a, b) => b.discount - a.discount)
+      default:
+        return productsToSort
+    }
+  }, [filteredProducts, sortOption])
+
+const handleProductClick = (product: Product) => {
+  const slug = `${slugify(product.product_name)}_${product.id}`
+  const categorySlug = product.categoryName.toLowerCase().replace(/\s+/g, '-')
+  router.push(`/product/${categorySlug}/${slug}`)
+}
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500 mx-auto mb-3" />
+          <p className="text-sm text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>{category} | Bhaba Marketplace</title>
+        <meta name="description" content={`Browse ${category} products on Bhaba Marketplace`} />
+      </Head>
+
+      <HeaderBar 
+        showBackButton={true}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setShowFilters={setShowFilters}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+      />
+
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6 capitalize">
+          {category}
+        </h1>
+
+        {sortedProducts.length > 0 ? (
+          // <div className={viewMode === 'grid' 
+          //   ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+          //   : "space-y-4"
+          // }>
+               <div className={
+  viewMode === 'grid'
+    ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4"
+    : "space-y-4"
+}>
+            {sortedProducts.map((product) => (
+              <ProductCard 
+                key={product.id}
+                product={product}
+                viewMode={viewMode}
+                onClick={handleProductClick}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-600">
+              {searchQuery 
+                ? `No products found matching "${searchQuery}"`
+                : 'No products found in this category'
+              }
+            </p>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
+
+export async function getStaticProps({ params }: { params: { category: string } }) {
+  try {
+    // Convert URL param back to proper category name
+    const categoryName = params.category.replace(/-/g, ' ');
+    
+    const response = await fetchWithRetry<SearchResult>(
+      `${API_BASE}/search?category=${encodeURIComponent(categoryName)}`
+    );
+    
+    return {
+      props: {
+        initialProducts: Array.isArray(response?.hits) ? response.hits : []
+      },
+      revalidate: 3600
+    };
+  } catch (error) {
+    console.error('Error fetching category products:', error);
+    return {
+      props: {
+        initialProducts: []
+      }
+    };
+  }
+}
+
+export async function getStaticPaths() {
+  try {
+    const categories = await fetchWithRetry<string[]>(
+      `${API_BASE}/categories`
+    )
+    
+    const paths = Array.isArray(categories) ? categories.map((category) => ({
+      params: { category: category.toLowerCase().replace(/\s+/g, '-') }
+    })) : []
+
+    return {
+      paths,
+      fallback: 'blocking'
+    }
+  } catch (error) {
+    console.error('Error generating category paths:', error)
+    return {
+      paths: [],
+      fallback: 'blocking'
+    }
+  }
+}
+
+export default CategoryPage
+
+================================================================================
+
+FILE 14: C:\src\Bhaba_com\bhaba-marketplace\src\pages\index.tsx
+================================================================================
+
+import React, { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import Head from 'next/head'
+import { AlertCircle, X } from 'lucide-react'
+import ProductCard from '../components/ProductCard'
+import FilterModal from '../components/FilterModal'
+import HeaderBar from '../components/HeaderBar'
+import type { NextPage } from 'next'
+import Image from 'next/image'
+import BottomNavigation from '../components/BottomNavigation'
+import { slugify } from '../utils/api'
+
+interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+interface Vendor {
+  id: string
+  store_name: string
+  store_logo: string
+}
+
+interface HomeProps {
+  products: Product[]
+  vendors: Vendor[]
+  categories: string[]
+}
+
+const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [] }) => {
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState({
+    categories: [] as string[],
+    vendors: [] as string[],
+    priceRange: [0, 10000000] as [number, number],
+    inStock: false
+  })
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showFilters, setShowFilters] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [showAllProducts, setShowAllProducts] = useState(true)
+  const [sortOption, setSortOption] = useState('relevance')
+  const [selectedCategory] = useState<string | null>(null)
+
+  const categoryImages = {
+    Electronics: '/category-images/electronics.jpeg',
+    Shoes: '/category-images/shoes.webp',
+    Clothing: '/category-images/clothing.webp',
+    Automotive: '/category-images/automotive.webp',
+    Bags: '/category-images/bags.webp',
+    Cars: '/category-images/cars.jpg',
+    "Computer & Accessories": '/category-images/computer-accessories.png',
+    Furniture: '/category-images/furniture.jpeg',
+    "Grains & Pulses": '/category-images/grains_pulses.jpeg',
+    "Health & Beauty": '/category-images/health_beauty.jpeg',
+    "Home Appliances": '/category-images/home_appliances.jpeg',
+    "Home Textile": '/category-images/home_textile.jpeg',
+    "Jewelry & Watches": '/category-images/jewelry_watches.jpeg',
+    Phone: '/category-images/phone.jpg',
+    Smokeables: '/category-images/smokeables.webp',
+    "Sports & Outdoors": '/category-images/sports_outdoors.jpeg',
+    "Office Supplies" : '/category-images/office_supplies.jpeg',
+  }
+
+  const filteredProducts = useMemo(() => {
+    let filtered = products
+    
+    if (searchQuery) {
+      filtered = filtered.filter(product => {
+        const searchLower = searchQuery.toLowerCase()
+        return (
+          product.product_name.toLowerCase().includes(searchLower) ||
+          product.description.toLowerCase().includes(searchLower) ||
+          product.vendorName.toLowerCase().includes(searchLower) ||
+          product.categoryName.toLowerCase().includes(searchLower)
+      )})
+    }
+    
+    if (filters.categories.length > 0) {
+      filtered = filtered.filter(product => 
+        filters.categories.includes(product.categoryName)
+      )
+    }
+    
+    if (filters.vendors.length > 0) {
+      filtered = filtered.filter(product => 
+        filters.vendors.includes(product.vendorId)
+      )
+    }
+    
+    filtered = filtered.filter(product => {
+      const price = product.discount > 0 
+        ? product.price * (1 - product.discount / 100) 
+        : product.price
+      return price >= filters.priceRange[0] && price <= filters.priceRange[1]
+    })
+    
+    if (filters.inStock) {
+      filtered = filtered.filter(product => product.isAvailable)
+    }
+    
+    switch(sortOption) {
+      case 'price-asc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceA - priceB
+        })
+        break
+      case 'price-desc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceB - priceA
+        })
+        break
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime())
+        break
+      case 'discount':
+        filtered.sort((a, b) => b.discount - a.discount)
+        break
+      case 'relevance':
+      default:
+        if (searchQuery) {
+          filtered.sort((a, b) => {
+            const aMatches = [
+              a.product_name.toLowerCase().includes(searchQuery.toLowerCase()),
+              a.description.toLowerCase().includes(searchQuery.toLowerCase()),
+              a.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
+            ].filter(Boolean).length
+            
+            const bMatches = [
+              b.product_name.toLowerCase().includes(searchQuery.toLowerCase()),
+              b.description.toLowerCase().includes(searchQuery.toLowerCase()),
+              b.vendorName.toLowerCase().includes(searchQuery.toLowerCase())
+            ].filter(Boolean).length
+            
+            return bMatches - aMatches
+          })
+        }
+        break
+    }
+    
+    return filtered
+  }, [products, searchQuery, filters, sortOption])
+
+  const productsPerPage = 12
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage)
+  const currentProducts = filteredProducts 
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filters])
+
+  const handleProductClick = (product: Product) => {
+    const slug = `${slugify(product.product_name)}_${product.id}`
+    const categorySlug = product.categoryName.toLowerCase().replace(/\s+/g, '-')
+    router.push(`/product/${categorySlug}/${slug}`)
+  }
+
+  const handlePageChange = (page: number) => {
+    setShowAllProducts(false)
+    setCurrentPage(page)
+  }
+
+  const handleSeeAll = () => {
+    setShowAllProducts(true)
+    setCurrentPage(1)
+  }
+
+  const [showWholesale, setShowWholesale] = useState(false);
+  const [wholesaleVendors] = useState<string[]>([
+    'dPpBnTL3CDN879g7X1cRVoRG5wn2',
+  ]);
+
+  const handleWholesaleClick = () => {
+    setShowWholesale(true);
+    setFilters({
+      ...filters,
+      vendors: wholesaleVendors
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16 w-full overflow-x-hidden">
+      <Head>
+        <title>Bhaba Marketplace - Shop Online in Tanzania</title>
+        <meta name="description" content="Discover the best products at affordable prices in Tanzania. Shop electronics, clothing, shoes and more." />
+      </Head>
+
+      <HeaderBar 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setShowFilters={setShowFilters}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+      />
+
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        {showWholesale && (
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Wholesale Products
+            </h2>
+            <button 
+              onClick={() => {
+                setShowWholesale(false);
+                setFilters({
+                  ...filters,
+                  vendors: []
+                });
+              }}
+              className="text-blue-500 text-sm"
+            >
+              Show All Products
+            </button>
+          </div>
+        )}
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2 sm:gap-0">
+          <div>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+              {searchQuery ? `Search results for "${searchQuery}"` : 'All Products'}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600">
+              {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
+          
+          {(filters.categories.length > 0 || filters.vendors.length > 0 || filters.inStock) && (
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+              <span className="text-xs sm:text-sm text-gray-600">Active filters:</span>
+              {filters.categories.map(categoryName => (
+                <span key={categoryName} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs">
+                  {categoryName}
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        ...filters,
+                        categories: filters.categories.filter(name => name !== categoryName)
+                      })
+                    }}
+                    className="hover:text-blue-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {filters.vendors.map(vendorId => {
+                const vendor = vendors.find(v => v.id === vendorId)
+                return vendor ? (
+                  <span key={vendorId} className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs">
+                    {vendor.store_name}
+                    <button
+                      onClick={() => {
+                        setFilters({
+                          ...filters,
+                          vendors: filters.vendors.filter(id => id !== vendorId)
+                        })
+                      }}
+                      className="hover:text-green-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ) : null
+              })}
+              {filters.inStock && (
+                <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs">
+                  In Stock Only
+                  <button
+                    onClick={() => setFilters({ ...filters, inStock: false })}
+                    className="hover:text-purple-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mb-4 sm:mb-6 overflow-x-auto">
+          <div className="flex gap-3 pb-2">
+            {categories.map((categoryName) => (
+              <button
+                key={categoryName}
+                onClick={() => {
+                  router.push(`/category/${categoryName.toLowerCase().replace(/\s+/g, '-')}`)
+                }}
+                className={`flex flex-col items-center justify-center w-20 sm:w-24 h-20 sm:h-24 rounded-lg transition-all ${
+                  selectedCategory === categoryName
+                    ? 'bg-blue-50 border-2 border-blue-500'
+                    : 'bg-white border border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                {categoryImages[categoryName as keyof typeof categoryImages] && (
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 mb-1 overflow-hidden">
+                    <Image
+                      src={categoryImages[categoryName as keyof typeof categoryImages]}
+                      alt={categoryName}
+                      fill
+                      className="object-cover rounded-md"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                <span className={`text-xs sm:text-sm text-center font-medium px-1 ${
+                  filters.categories.includes(categoryName)
+                    ? 'text-blue-700'
+                    : 'text-gray-700'
+                }`}>
+                  {categoryName.split(' ')[0]}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {currentProducts.length === 0 ? (
+          <div className="text-center py-12">
+            <AlertCircle className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">No products found</h3>
+            <p className="text-xs sm:text-sm text-gray-600">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          // <div className={
+          //   viewMode === 'grid'
+          //     ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-4 gap-4 sm:gap-6"
+          //     : "space-y-4"
+          // }>
+
+           <div className={
+                 viewMode === 'grid'
+                  ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4"
+                   : "space-y-4"
+            }>
+            {currentProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onClick={handleProductClick}
+                viewMode={viewMode}
+              />
+            ))}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center mt-6 sm:mt-8 gap-1 sm:gap-2">
+            <button
+              onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+              disabled={currentPage === 1 || showAllProducts}
+              className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            
+            {!showAllProducts && Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber: number
+              if (totalPages <= 5) {
+                pageNumber = i + 1
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i
+              } else {
+                pageNumber = currentPage - 2 + i
+              }
+              
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  className={`px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium rounded-md ${
+                    currentPage === pageNumber
+                      ? 'bg-blue-500 text-white'
+                      : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              )
+            })}
+            
+            <button
+              onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+              disabled={currentPage === totalPages || showAllProducts}
+              className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+
+            {showAllProducts ? (
+              <button
+                onClick={() => {
+                  setShowAllProducts(false)
+                  handlePageChange(1)
+                }}
+                className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Show Pages
+              </button>
+            ) : (
+              <button
+                onClick={handleSeeAll}
+                className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                See All
+              </button>
+            )}
+          </div>
+        )}
+      </main>
+
+      <BottomNavigation onWholesaleClick={handleWholesaleClick} />
+
+      <FilterModal
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        categories={categories.map(name => ({ id: name, category_name: name }))}
+        vendors={vendors}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
+    </div>
+  )
+}
+
+export async function getStaticProps() {
+     //const apiBase = "https://bhababackend.onrender.com";
+  const isBrowser = typeof window !== 'undefined';
+  const isLocalhost = isBrowser && window.location.hostname === 'localhost';
+
+  const apiBase = isLocalhost
+    ? 'https://bhababackend.onrender.com'
+    : 'http://192.168.1.165:5000';
+  
+  try {
+    const [featuredProductsRes, vendorsRes, categoriesRes] = await Promise.all([
+      fetch(`${apiBase}/search?limit=10`),
+      fetch(`${apiBase}/vendors`),
+      fetch(`${apiBase}/categories`)
+    ])
+
+    const parseResponse = async (res: Response) => {
+      const text = await res.text()
+      try {
+        return text ? JSON.parse(text) : []
+      } catch (e) {
+        console.error('Failed to parse response:', text, e)
+        return []
+      }
+    }
+
+    return {
+      props: {
+        products: await parseResponse(featuredProductsRes),
+        vendors: await parseResponse(vendorsRes),
+        categories: await parseResponse(categoriesRes),
+      },
+      revalidate: 3600
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return {
+      props: {
+        products: [],
+        vendors: [],
+        categories: []
+      }
+    }
+  }
+}
+
+export default Home
+
+================================================================================
+
+FILE 15: C:\src\Bhaba_com\bhaba-marketplace\src\pages\privacy-policy-full.tsx
+================================================================================
+import React from 'react'
+import Head from 'next/head'
+import HeaderBar from '../components/HeaderBar'
+import Link from 'next/link'
+import { Shield, Download } from 'lucide-react'
+
+const PrivacyPolicyFull: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>Complete Privacy Policy | Bhaba Marketplace</title>
+        <meta name="description" content="Complete Privacy Policy for Bhaba Marketplace" />
+      </Head>
+
+      <HeaderBar 
+        showBackButton={true}
+        showSearch={false}
+        showViewToggle={false}
+        showSort={false}
+        showFilter={false}
+        onBack={() => window.history.back()}
+      />
+
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <Shield className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Complete Privacy Policy</h1>
+            </div>
+            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              <Download className="h-4 w-4" />
+              <span>Download PDF</span>
+            </button>
+          </div>
+
+          <div className="prose prose-lg max-w-none">
+            <div className="bg-blue-50 p-4 rounded-md mb-6">
+              <p className="text-blue-800">
+                <strong>Last Updated:</strong> January 15, 2024<br />
+                <strong>Effective Date:</strong> January 15, 2024
+              </p>
+            </div>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">1. Introduction</h2>
+              <p className="text-gray-700 mb-4">
+                Welcome to Bhaba Marketplace (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your 
+                personal information and your right to privacy. This Privacy Policy explains how we collect, 
+                use, disclose, and safeguard your information when you use our marketplace platform.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">2. Information We Collect</h2>
+              
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">2.1 Personal Information</h3>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>Contact Information (name, email, phone number)</li>
+                <li>Account Credentials (username, password)</li>
+                <li>Payment Information (credit card details, billing address)</li>
+                <li>Demographic Information (age, gender, location)</li>
+                <li>Communication Preferences</li>
+              </ul>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">2.2 Usage Data</h3>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>IP Address and device information</li>
+                <li>Browser type and version</li>
+                <li>Pages visited and time spent</li>
+                <li>Clickstream data and navigation patterns</li>
+                <li>Transaction history and purchase behavior</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. How We Use Your Information</h2>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>To provide and maintain our services</li>
+                <li>To process transactions and send order confirmations</li>
+                <li>To communicate with you about products, services, and promotions</li>
+                <li>To personalize your experience and provide content recommendations</li>
+                <li>To improve our website and services</li>
+                <li>To prevent fraud and enhance security</li>
+                <li>To comply with legal obligations</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">4. Data Sharing and Disclosure</h2>
+              
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">4.1 Service Providers</h3>
+              <p className="text-gray-700 mb-4">
+                We may share your information with third-party service providers who perform services on our behalf, 
+                including payment processing, data analysis, email delivery, hosting services, and customer service.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">4.2 Business Transfers</h3>
+              <p className="text-gray-700 mb-4">
+                In connection with any merger, sale of company assets, financing, or acquisition of all or a portion 
+                of our business to another company, we may transfer your information.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">4.3 Legal Requirements</h3>
+              <p className="text-gray-700 mb-4">
+                We may disclose your information where required to do so by law or in response to valid requests 
+                by public authorities.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">5. Data Retention</h2>
+              <p className="text-gray-700 mb-4">
+                We will retain your personal information only for as long as is necessary for the purposes set out 
+                in this Privacy Policy. We will retain and use your information to the extent necessary to comply 
+                with our legal obligations, resolve disputes, and enforce our policies.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">6. Your Rights</h2>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>Access:</strong> You can request copies of your personal data</li>
+                <li><strong>Rectification:</strong> You can request correction of inaccurate data</li>
+                <li><strong>Erasure:</strong> You can request deletion of your personal data</li>
+                <li><strong>Restriction:</strong> You can request processing restriction</li>
+                <li><strong>Data Portability:</strong> You can request transfer of your data</li>
+                <li><strong>Objection:</strong> You can object to our processing of your data</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">7. Security Measures</h2>
+              <p className="text-gray-700 mb-4">
+                We implement appropriate security measures to protect your personal information against 
+                unauthorized access, alteration, disclosure, or destruction. These include:
+              </p>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>SSL encryption for data transmission</li>
+                <li>Regular security assessments and audits</li>
+                <li>Access controls and authentication mechanisms</li>
+                <li>Data encryption at rest and in transit</li>
+                <li>Regular security training for employees</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">8. International Data Transfers</h2>
+              <p className="text-gray-700 mb-4">
+                Your information may be transferred to and processed in countries other than the country in 
+                which you reside. These countries may have data protection laws that are different from the 
+                laws of your country.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">9. Children&apos;s Privacy</h2>
+              <p className="text-gray-700 mb-4">
+                Our service is not intended for use by children under the age of 18. We do not knowingly 
+                collect personal information from children under 18. If you become aware that a child has 
+                provided us with personal information, please contact us.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">10. Changes to This Policy</h2>
+              <p className="text-gray-700 mb-4">
+                We may update our Privacy Policy from time to time. We will notify you of any changes by 
+                posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">11. Contact Information</h2>
+              <div className="bg-gray-50 p-4 rounded-md">
+                <p className="text-gray-700 mb-2">
+                  <strong>Bhaba Limited</strong><br />
+                  P.O. Box 12345<br />
+                  Dar es Salaam, Tanzania
+                </p>
+                <p className="text-gray-700 mb-2">
+                  <strong>Email:</strong> privacy@bhabalimited.com<br />
+                  <strong>Phone:</strong> +255 618 205 278
+                </p>
+                <p className="text-gray-700">
+                  <strong>Data Protection Officer:</strong> dpo@bhabalimited.com
+                </p>
+              </div>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">12. Governing Law</h2>
+              <p className="text-gray-700 mb-4">
+                This Privacy Policy shall be governed by and construed in accordance with the laws of 
+                the United Republic of Tanzania, without regard to its conflict of law provisions.
+              </p>
+            </section>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Related Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link href="/terms-of-service-full" className="p-4 bg-gray-50 rounded-md hover:bg-gray-100">
+              <h4 className="font-semibold text-blue-600">Complete Terms of Service</h4>
+              <p className="text-sm text-gray-600">Read our full terms and conditions</p>
+            </Link>
+            <Link href="/privacy-policy" className="p-4 bg-gray-50 rounded-md hover:bg-gray-100">
+              <h4 className="font-semibold text-blue-600">Summary Privacy Policy</h4>
+              <p className="text-sm text-gray-600">Quick overview of our privacy practices</p>
+            </Link>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default PrivacyPolicyFull
+
+================================================================================
+
+FILE 16: C:\src\Bhaba_com\bhaba-marketplace\src\pages\privacy-policy.tsx
+================================================================================
+import React from 'react'
+import Head from 'next/head'
+import HeaderBar from '../components/HeaderBar'
+import Link from 'next/link'
+
+const PrivacyPolicy: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>Privacy Policy | Bhaba Marketplace</title>
+        <meta name="description" content="Bhaba Marketplace Privacy Policy" />
+      </Head>
+
+      <HeaderBar 
+        showBackButton={true}
+        showSearch={false}
+        showViewToggle={false}
+        showSort={false}
+        showFilter={false}
+        onBack={() => window.history.back()}
+      />
+
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Privacy Policy</h1>
+          
+          <div className="prose prose-lg max-w-none">
+            <p className="text-gray-600 mb-6">
+              Last updated: {new Date().toLocaleDateString()}
+            </p>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">1. Information We Collect</h2>
+              <p className="text-gray-700 mb-4">
+                We collect information that you provide directly to us, including when you:
+              </p>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>Create an account</li>
+                <li>Make a purchase</li>
+                <li>Contact customer support</li>
+                <li>Participate in promotions</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">2. How We Use Your Information</h2>
+              <p className="text-gray-700 mb-4">
+                We use the information we collect to:
+              </p>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>Provide and maintain our services</li>
+                <li>Process transactions</li>
+                <li>Send you technical notices and support messages</li>
+                <li>Respond to your comments and questions</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. Data Security</h2>
+              <p className="text-gray-700">
+                We implement appropriate security measures to protect your personal information 
+                against unauthorized access, alteration, disclosure, or destruction.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">4. Your Rights</h2>
+              <p className="text-gray-700 mb-4">
+                You have the right to:
+              </p>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>Access your personal information</li>
+                <li>Correct inaccurate data</li>
+                <li>Request deletion of your data</li>
+                <li>Object to processing of your data</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">5. Contact Us</h2>
+              <p className="text-gray-700">
+                If you have any questions about this Privacy Policy, please contact us at:
+              </p>
+              <p className="text-blue-600 mt-2">
+                Email: privacy@bhabalimited.com<br />
+                Phone: +255 618 205 278
+              </p>
+            </section>
+
+            {/* <div className="border-t pt-6 mt-6">
+              <p className="text-sm text-gray-500">
+                For the complete and most updated version of our Privacy Policy, please visit:{' '}
+                <a 
+                  href="https://bhabalimited.com/public/privacy_policy" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://bhabalimited.com/public/privacy_policy
+                </a>
+              </p>
+            </div> */}
+<div className="border-t pt-6 mt-6">
+  <p className="text-sm text-gray-500 mb-4">
+    For the complete and most updated version of our Privacy Policy, please visit our full policy page:
+  </p>
+  <Link 
+    href="/privacy-policy-full" 
+    className="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold"
+  >
+    View Complete Privacy Policy →
+  </Link>
+</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default PrivacyPolicy
+
+================================================================================
+
+FILE 17: C:\src\Bhaba_com\bhaba-marketplace\src\pages\product\[category]\[slug].tsx
+================================================================================
+// src/pages/product/[slug].tsx
+import { useRouter } from 'next/router'
+import React, { useState, useMemo, useEffect } from 'react'
+import Head from 'next/head'
+import { ChevronLeft, ChevronRight, Phone, MessageCircle, X, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import ProductCard from '../../../components/ProductCard'
+import HeaderBar from '../../../components/HeaderBar'
+import FilterModal from '../../../components/FilterModal'
+import { formatCurrency } from '../../../utils/formatCurrency'
+import type { NextPage } from 'next'
+import { slugify } from '@/utils/api'
+import { fetchWithRetry } from '../../../utils/api'
+import Link from 'next/link'
+
+interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+interface Vendor {
+  id: string
+  store_name: string
+  store_logo: string
+}
+
+interface ProductDetailProps {
+  products: Product[]
+  vendors: Vendor[]
+  categories: string[]
+}
+
+
+// const ProductDetail: NextPage<ProductDetailProps> = ({ products: initialProducts, vendors, categories }) => {
+//   const router = useRouter()
+//   const { slug } = router.query
+//   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+//   const [products, setProducts] = useState<Product[]>(initialProducts)
+//   const [loading, setLoading] = useState(false)
+
+
+const ProductDetail: NextPage<ProductDetailProps> = ({ products: initialProducts, vendors, categories }) => {
+  const router = useRouter()
+  const { slug } = router.query
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [loading, setLoading] = useState(false)
+  
+  // Extract product ID from slug
+  const productId = typeof slug === 'string' ? slug.split('_').pop() : ''
+  const product = products.find(p => p.id.toString() === productId)
+  
+  // State for search and filters
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState({
+    categories: [] as string[],
+    vendors: [] as string[],
+    priceRange: [0, 10000000] as [number, number],
+    inStock: false
+  })
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showFilters, setShowFilters] = useState(false)
+  const [sortOption, setSortOption] = useState('relevance')
+  const [expandedDescription, setExpandedDescription] = useState(false);
+
+
+  useEffect(() => {
+     const apiBase = "https://bhababackend.onrender.com";
+    // Fetch product details if not found in initial props
+    if (!product && productId) {
+      const fetchProduct = async () => {
+        setLoading(true)
+        try {
+          const response = await fetch(`${apiBase}/products/${productId}`)
+          const data = await response.json()
+          setProducts(prev => [...prev, data])
+        } catch (error) {
+          console.error('Error fetching product:', error)
+        } finally {
+          setLoading(false)
+        }
+      }
+      fetchProduct()
+    }
+  }, [product, productId])
+
+  // Filter and sort all products except the current one
+  const filteredProducts = useMemo(() => {
+    let filtered = products.filter(p => p.id.toString() !== productId)
+    
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase()
+      filtered = filtered.filter(p => 
+        p.product_name.toLowerCase().includes(searchLower) ||
+        p.description.toLowerCase().includes(searchLower) ||
+        p.vendorName.toLowerCase().includes(searchLower)
+      )
+    }
+    
+    if (filters.categories.length > 0) {
+      filtered = filtered.filter(p => 
+        filters.categories.includes(p.categoryName)
+      )
+    }
+    
+    if (filters.vendors.length > 0) {
+      filtered = filtered.filter(p => 
+        filters.vendors.includes(p.vendorId)
+      )
+    }
+    
+    filtered = filtered.filter(p => {
+      const price = p.discount > 0 
+        ? p.price * (1 - p.discount / 100) 
+        : p.price
+      return price >= filters.priceRange[0] && price <= filters.priceRange[1]
+    })
+    
+    if (filters.inStock) {
+      filtered = filtered.filter(p => p.isAvailable)
+    }
+    
+    switch(sortOption) {
+      case 'price-asc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceA - priceB
+        })
+        break
+      case 'price-desc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceB - priceA
+        })
+        break
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime())
+        break
+      case 'discount':
+        filtered.sort((a, b) => b.discount - a.discount)
+        break
+      default:
+        break
+    }
+    
+    return filtered
+  }, [products, productId, searchQuery, filters, sortOption])
+
+  const relatedProducts = useMemo(() => {
+    if (!product) return []
+    return filteredProducts.filter(p => 
+      p.categoryId === product.categoryId
+    ).slice(0, 120)
+  }, [filteredProducts, product])
+
+  const otherProducts = useMemo(() => {
+    if (!product) return []
+    return filteredProducts.filter(p => 
+      p.categoryId !== product.categoryId
+    ).slice(0, 120) // Reduced from 400 to 12 for better performance
+  }, [filteredProducts, product])
+
+  const handleBack = () => {
+    router.back()
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500 mx-auto mb-3" />
+          <p className="text-sm text-gray-600">Loading product details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <X className="h-10 w-10 text-red-500 mx-auto mb-3" />
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Product not found</h2>
+          <button
+            onClick={() => router.back()}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const discountedPrice = product.discount > 0 
+    ? product.price * (1 - product.discount / 100) 
+    : product.price
+
+  // const handleContactVendor = (e: React.MouseEvent, type: 'whatsapp' | 'call') => {
+  //   e.preventDefault()
+  //   e.stopPropagation()
+    
+  //   if (!product.mobile_number) {
+  //     alert('Mobile number not available for this vendor')
+  //     return
+  //   }
+    
+  //   const productImage = product.product_images?.[0] || ''
+  //   const originalPrice = formatCurrency(product.price)
+  //   const finalPrice = formatCurrency(discountedPrice)
+  //   const discountText = product.discount > 0 ? ` (${product.discount}% OFF)` : ''
+    
+  //   let message = `Hi, I'm interested in your product:\n\n`
+  //   message += `*Product Name:* ${product.product_name}\n`
+  //   message += `*Price:* ${finalPrice}${discountText}\n`
+  //   if (product.discount > 0) {
+  //     message += `*Original Price:* ${originalPrice}\n`
+  //   }
+  //   message += `*Category:* ${product.categoryName}\n`
+  //   if (product.description) {
+  //     message += `\n*Description:* ${product.description}\n`
+  //   }
+  //   message += `\nPlease let me know more about this product.`
+    
+  //   try {
+  //     if (type === 'whatsapp') {
+  //       if (productImage) {
+  //         message += `\n\n*Product Image:* ${productImage}`
+  //       }
+        
+  //       let cleanNumber = product.mobile_number.replace(/[^\d+]/g, '')
+        
+  //       if (cleanNumber.startsWith('+255')) {
+  //         cleanNumber = cleanNumber.substring(1)
+  //       } else if (cleanNumber.startsWith('255')) {
+  //         // Keep as is
+  //       } else if (cleanNumber.startsWith('0')) {
+  //         cleanNumber = '255' + cleanNumber.substring(1)
+  //       } else {
+  //         cleanNumber = '255' + cleanNumber
+  //       }
+        
+  //       const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`
+  //       window.open(whatsappUrl, '_blank')
+        
+  //     } else if (type === 'call') {
+  //       const callUrl = `tel:${product.mobile_number}`
+  //       window.location.href = callUrl
+  //     }
+  //   } catch (error) {
+  //     console.error('Error handling contact:', error)
+  //     alert('Unable to open contact method. Please try again.')
+  //   }
+  // }
+
+  const handleContactVendor = (e: React.MouseEvent, type: 'whatsapp' | 'call') => {
+  e.preventDefault()
+  e.stopPropagation()
+  
+  // Hardcoded number - will always use this regardless of product.mobile_number
+  const hardcodedNumber = '0618205278';
+  
+  const productImage = product.product_images?.[0] || ''
+  const originalPrice = formatCurrency(product.price)
+  const finalPrice = formatCurrency(discountedPrice)
+  const discountText = product.discount > 0 ? ` (${product.discount}% OFF)` : ''
+  
+  let message = `Hi, I'm interested in your product:\n\n`
+  message += `*Product Name:* ${product.product_name}\n`
+  message += `*Price:* ${finalPrice}${discountText}\n`
+  if (product.discount > 0) {
+    message += `*Original Price:* ${originalPrice}\n`
+  }
+  message += `*Category:* ${product.categoryName}\n`
+  if (product.description) {
+    message += `\n*Description:* ${product.description}\n`
+  }
+  message += `\nPlease let me know more about this product.`
+  
+  try {
+    if (type === 'whatsapp') {
+      if (productImage) {
+        message += `\n\n*Product Image:* ${productImage}`
+      }
+      
+      let cleanNumber = hardcodedNumber.replace(/[^\d+]/g, '')
+      
+      if (cleanNumber.startsWith('+255')) {
+        cleanNumber = cleanNumber.substring(1)
+      } else if (cleanNumber.startsWith('255')) {
+        // Keep as is
+      } else if (cleanNumber.startsWith('0')) {
+        cleanNumber = '255' + cleanNumber.substring(1)
+      } else {
+        cleanNumber = '255' + cleanNumber
+      }
+      
+      const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`
+      window.open(whatsappUrl, '_blank')
+      
+    } else if (type === 'call') {
+      const callUrl = `tel:${hardcodedNumber}`
+      window.location.href = callUrl
+    }
+  } catch (error) {
+    console.error('Error handling contact:', error)
+    alert('Unable to open contact method. Please try again.')
+  }
+}
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === product.product_images.length - 1 ? 0 : prev + 1
+    )
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => 
+      prev === 0 ? product.product_images.length - 1 : prev - 1
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>{product.product_name} | Bhaba Marketplace</title>
+        <meta name="description" content={product.description || `Buy ${product.product_name} at ${formatCurrency(discountedPrice)} in Tanzania`} />
+        <meta name="keywords" content={`${product.product_name}, ${product.categoryName}, Tanzania, buy online`} />
+        <meta property="og:title" content={`${product.product_name} | Bhaba Marketplace`} />
+        <meta property="og:description" content={product.description || `Buy ${product.product_name} at ${formatCurrency(discountedPrice)}`} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={`https://yourstore.com/product/${slug}`} />
+        {product.product_images.length > 0 && (
+          <meta property="og:image" content={product.product_images[0]} />
+        )}
+      </Head>
+
+      <HeaderBar 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setShowFilters={setShowFilters}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+        showBackButton={true}
+        onBack={handleBack}
+      />
+
+      {/* ... rest of your JSX remains exactly the same ... */}
+      {/* Make sure to keep all your existing JSX for the product display */}
+    
+       <div className="p-4 sm:p-6 w-full mx-auto">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 w-full">
+           {/* Product Images Section */}
+           <div className="space-y-3 sm:space-y-4 w-full">
+             <div className="relative w-full aspect-square">
+               <Image
+                 src={product.product_images?.[currentImageIndex] || '/category-images/placeholder-image.jpg'}
+                 alt={product.product_name}
+                 fill
+                 className="w-full h-full object-contain rounded-lg bg-white"
+                 priority={true}
+                 quality={90}
+               />
+       
+               {product.product_images && product.product_images.length > 1 && (
+                 <>
+                   <button
+                     onClick={prevImage}
+                     className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                   >
+                     <ChevronLeft className="h-5 w-5" />
+                   </button>
+                   <button
+                     onClick={nextImage}
+                     className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                   >
+                     <ChevronRight className="h-5 w-5" />
+                   </button>
+                 </>
+               )}
+             </div>
+             
+             {product.product_images && product.product_images.length > 1 && (
+               <div className="flex gap-2 overflow-x-auto pb-2">
+                 {product.product_images.map((image, index) => (
+                   <button
+                     key={index}
+                     onClick={() => setCurrentImageIndex(index)}
+                     className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 ${
+                       index === currentImageIndex ? 'border-blue-500' : 'border-gray-200'
+                     }`}
+                   >
+              
+       
+       <Image
+        //  src={product.product_images?.[currentImageIndex] || '/placeholder-image.jpg'}
+        // src={image}
+        src={image || '/category-images/placeholder-image.jpeg'}
+         alt={product.product_name}
+         width={800}
+         height={800}
+         className="w-full h-full object-contain rounded-lg bg-white"
+         priority={true}
+         quality={75}
+         placeholder="blur"
+         blurDataURL="/category-images/placeholder-image.jpeg" // Add a small placeholder image
+         onError={(e) => {
+           (e.target as HTMLImageElement).src = '/category-images/placeholder-image.jpeg';
+         }}
+       />
+       
+                   </button>
+                 ))}
+               </div>
+             )}
+           </div>
+           
+           {/* Product Info Section */}
+           <div className="space-y-4 sm:space-y-6 w-full">
+             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+               {product.product_name}
+             </h1>
+             
+             <div>
+               <div className="flex flex-wrap items-center gap-2 mb-2">
+                 <span className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                   {product.categoryName}
+                 </span>
+                 {!product.isAvailable && (
+                   <span className="text-xs sm:text-sm text-red-600 bg-red-50 px-2 py-1 rounded-md">
+                     Out of Stock
+                   </span>
+                 )}
+               </div>
+               
+               <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+                 <div>
+                   <span className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">
+                     {formatCurrency(discountedPrice)}
+                   </span>
+                   {product.discount > 0 && (
+                     <span className="text-sm sm:text-lg text-gray-500 line-through ml-2">
+                       {formatCurrency(product.price)}
+                     </span>
+                   )}
+                 </div>
+                 {product.discount > 0 && (
+                   <span className="bg-red-500 text-white px-2 py-1 rounded-md text-xs sm:text-sm font-semibold">
+                     -{product.discount}% OFF
+                   </span>
+                 )}
+               </div>
+             </div>
+             
+             {/* Description and Details */}
+             
+             {/* Description and Details */}
+<div className="space-y-4">
+  <div>
+    <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">Description</h3>
+    <div className="relative">
+      <p 
+        className={`text-gray-700 text-sm sm:text-base leading-relaxed whitespace-pre-line ${
+          !expandedDescription && product.description && product.description.length > 200 
+            ? 'line-clamp-4' 
+            : ''
+        }`}
+      >
+        {product.description || 'No description available'}
+      </p>
+      {product.description && product.description.length > 200 && (
+        <button
+          onClick={() => setExpandedDescription(!expandedDescription)}
+          className="text-blue-500 hover:text-blue-700 text-sm font-medium mt-1 focus:outline-none"
+        >
+          {expandedDescription ? 'Show Less' : 'Read More'}
+        </button>
+      )}
+    </div>
+  </div>
+  
+  {product.details && (
+    <div>
+      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">Details</h3>
+      <p className="text-gray-700 text-sm sm:text-base">{product.details}</p>
+    </div>
+  )}
+  
+  <div>
+    <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">Vendor</h3>
+    <p className="text-gray-700 text-sm sm:text-base">{product.vendorName}</p>
+    <p className="text-gray-600 text-sm sm:text-base">
+      Contact: {"0618205278"}
+    </p>
+  </div>
+  
+  {product.moq > 0 && (
+    <div>
+      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">
+        Minimum Order Quantity
+      </h3>
+      <p className="text-gray-700 text-sm sm:text-base">
+        {product.moq} units
+      </p>
+    </div>
+  )}
+</div>
+             
+             {/* Contact Buttons */}
+             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-2 sm:pt-4">
+               <button
+                 onClick={(e) => handleContactVendor(e, 'whatsapp')}
+                 className="flex-1 bg-green-500 text-white py-3 px-6 rounded-md hover:bg-green-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base font-semibold"
+                 type="button"
+               >
+                 <MessageCircle className="h-5 w-5" />
+                 WhatsApp
+               </button>
+               <button
+                 onClick={(e) => handleContactVendor(e, 'call')}
+                 className="flex-1 bg-blue-500 text-white py-3 px-6 rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base font-semibold"
+                 type="button"
+               >
+                 <Phone className="h-5 w-5" />
+                 Call
+               </button>
+             </div>
+           </div>
+         </div>
+       
+         {/* Related Products Section */}
+         {relatedProducts.length > 0 && (
+           <div className="mt-8 border-t pt-8 w-full">
+             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
+               Related Products
+             </h3>
+            {/* <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 w-full"> */}
+             <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
+               {relatedProducts.map((relatedProduct) => (
+                 <ProductCard
+                   key={relatedProduct.id}
+                   product={relatedProduct}
+                   viewMode="grid"
+                 />
+               ))}
+             </div>
+           </div>
+         )}
+       
+         {/* Other Products Section */}
+         {otherProducts.length > 0 && (
+           <div className="mt-8 border-t pt-8 w-full">
+             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
+               You Might Also Like
+             </h3>
+             {/*<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 w-full"> */}
+             <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
+               {otherProducts.map((otherProduct) => (
+               <ProductCard
+                   key={otherProduct.id}
+                   product={otherProduct}
+                   viewMode="grid"
+                 />
+               ))}
+             </div>
+           </div>
+         )}
+      {/* Legal Links Section - Add this section */}
+      <div className="mt-12 border-t pt-8">
+        <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
+          <Link href="/privacy-policy" className="hover:text-blue-600 transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/terms-of-service" className="hover:text-blue-600 transition-colors">
+            Terms of Service
+          </Link>
+          <a 
+            href="https://bhabalimited.com/privacy_policy" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-blue-600 transition-colors"
+          >
+            Full Privacy Policy
+          </a>
+          <a 
+            href="https://bhabalimited.com/terms_of_service" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-blue-600 transition-colors"
+          >
+            Full Terms of Service
+          </a>
+        </div>
+      </div>
+    </div>
+       
+       
+             <FilterModal
+               isOpen={showFilters}
+               onClose={() => setShowFilters(false)}
+               categories={categories.map(name => ({ id: name, category_name: name }))}
+               vendors={vendors}
+               filters={filters}
+               onFiltersChange={setFilters}
+             />
+    
+    </div>
+    
+  )
+}
+
+
+export async function getStaticPaths() {
+ //const apiBase = "https://bhababackend.onrender.com";
+    const isBrowser = typeof window !== 'undefined';
+const isLocalhost = isBrowser && window.location.hostname === 'localhost';
+
+  const apiBase = (
+  isLocalhost
+    ? 'https://bhababackend.onrender.com'
+    : 'http://192.168.1.165:5000'
+);
+  
+  
+  try {
+    const products = await fetchWithRetry<Product[]>(`${apiBase}/products`)
+
+    const paths = products.map((product) => ({
+      params: {
+        category: product.categoryName.toLowerCase().replace(/\s+/g, '-'),
+        slug: `${slugify(product.product_name)}_${product.id}`
+      }
+    }))
+
+    return { paths, fallback: 'blocking' }
+  } catch (error) {
+    console.error('Error generating paths:', error)
+    return { paths: [], fallback: 'blocking' }
+  }
+}
+
+
+export async function getStaticProps({ params }: { params: { category: string, slug: string } }) {
+  //const apiBase = "https://bhababackend.onrender.com";
+       const isBrowser = typeof window !== 'undefined';
+const isLocalhost = isBrowser && window.location.hostname === 'localhost';
+
+  const apiBase = (
+  isLocalhost
+    ? 'https://bhababackend.onrender.com'
+    : 'http://192.168.1.165:5000'
+);
+   try {
+    const productId = params.slug.split('_').pop() || ''
+    
+    const [, featuredProductsRes, vendorsRes, categoriesRes] = await Promise.all([
+      fetch(`${apiBase}/products/${productId}`),
+      fetch(`${apiBase}/search?limit=10`),
+      fetch(`${apiBase}/vendors`),
+      fetch(`${apiBase}/categories`)
+    ])
+
+    // Handle non-JSON responses
+    const parseResponse = async (res: Response) => {
+      const text = await res.text()
+      try {
+        return text ? JSON.parse(text) : []
+      } catch (e) {
+        console.error('Failed to parse response:', text, e)
+        return []
+      }
+    }
+
+    return {
+      props: {
+        products: await parseResponse(featuredProductsRes),
+        vendors: await parseResponse(vendorsRes),
+        categories: await parseResponse(categoriesRes),
+      },
+      revalidate: 3600
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return {
+      props: {
+        products: [],
+        vendors: [],
+        categories: []
+      }
+    }
+  }
+}
+
+export default ProductDetail
+
+================================================================================
+
+FILE 18: C:\src\Bhaba_com\bhaba-marketplace\src\pages\terms-of-service-full.tsx
+================================================================================
+import React from 'react'
+import Head from 'next/head'
+import HeaderBar from '../components/HeaderBar'
+import Link from 'next/link'
+import { FileText, Download } from 'lucide-react'
+
+const TermsOfServiceFull: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>Complete Terms of Service | Bhaba Marketplace</title>
+        <meta name="description" content="Complete Terms of Service for Bhaba Marketplace" />
+      </Head>
+
+      <HeaderBar 
+        showBackButton={true}
+        showSearch={false}
+        showViewToggle={false}
+        showSort={false}
+        showFilter={false}
+        onBack={() => window.history.back()}
+      />
+
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <FileText className="h-8 w-8 text-green-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Complete Terms of Service</h1>
+            </div>
+            <button className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+              <Download className="h-4 w-4" />
+              <span>Download PDF</span>
+            </button>
+          </div>
+
+          <div className="prose prose-lg max-w-none">
+            <div className="bg-green-50 p-4 rounded-md mb-6">
+              <p className="text-green-800">
+                <strong>Last Updated:</strong> January 15, 2024<br />
+                <strong>Effective Date:</strong> January 15, 2024
+              </p>
+            </div>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">1. Agreement to Terms</h2>
+              <p className="text-gray-700 mb-4">
+                By accessing or using Bhaba Marketplace (&quot;the Platform&quot;), you agree to be bound by these 
+                Terms of Service and all applicable laws and regulations. If you do not agree with any of 
+                these terms, you are prohibited from using or accessing this site.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">2. Definitions</h2>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li><strong>&quot;Platform&quot;</strong> refers to Bhaba Marketplace website and mobile applications</li>
+                <li><strong>&quot;User&quot;</strong> refers to any individual or entity accessing the Platform</li>
+                <li><strong>&quot;Vendor&quot;</strong> refers to sellers offering products on the Platform</li>
+                <li><strong>&quot;Buyer&quot;</strong> refers to purchasers of products on the Platform</li>
+                <li><strong>&quot;Content&quot;</strong> refers to text, images, videos, and other materials</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. User Accounts</h2>
+              
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">3.1 Account Creation</h3>
+              <p className="text-gray-700 mb-4">
+                To access certain features of the Platform, you must create an account. You agree to provide 
+                accurate, current, and complete information during the registration process.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">3.2 Account Security</h3>
+              <p className="text-gray-700 mb-4">
+                You are responsible for maintaining the confidentiality of your account credentials and for 
+                all activities that occur under your account. You agree to notify us immediately of any 
+                unauthorized use of your account.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">3.3 Account Termination</h3>
+              <p className="text-gray-700 mb-4">
+                We reserve the right to suspend or terminate your account at our sole discretion, without 
+                notice, for conduct that we believe violates these Terms or is harmful to other users, us, 
+                or third parties, or for any other reason.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">4. Products and Services</h2>
+              
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">4.1 Product Listings</h3>
+              <p className="text-gray-700 mb-4">
+                Vendors are responsible for the accuracy and completeness of their product listings, including 
+                descriptions, prices, and images. All products must comply with applicable laws and regulations.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">4.2 Pricing and Availability</h3>
+              <p className="text-gray-700 mb-4">
+                All prices are subject to change without notice. We reserve the right to modify or discontinue 
+                any product at any time. We are not responsible for typographical errors regarding price or 
+                any other matter.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">4.3 Orders and Payments</h3>
+              <p className="text-gray-700 mb-4">
+                All orders are subject to acceptance and availability. Payment must be received before orders 
+                are processed. We use third-party payment processors and are not responsible for their actions.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">5. Intellectual Property</h2>
+              
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">5.1 Platform Content</h3>
+              <p className="text-gray-700 mb-4">
+                All content on the Platform, including text, graphics, logos, and software, is the property 
+                of Bhaba Limited or its content suppliers and is protected by intellectual property laws.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">5.2 User Content</h3>
+              <p className="text-gray-700 mb-4">
+                By submitting content to the Platform, you grant us a worldwide, non-exclusive, royalty-free 
+                license to use, reproduce, and display such content in connection with the Platform.
+              </p>
+
+              <h3 className="text-xl font-semibold text-gray-700 mb-3">5.3 Trademarks</h3>
+              <p className="text-gray-700 mb-4">
+                The Bhaba Marketplace name and logo are trademarks of Bhaba Limited. You may not use these 
+                trademarks without our prior written permission.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">6. Prohibited Activities</h2>
+              <p className="text-gray-700 mb-4">
+                You agree not to engage in any of the following prohibited activities:
+              </p>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>Violating any applicable laws or regulations</li>
+                <li>Infringing upon intellectual property rights</li>
+                <li>Harassing, abusing, or harming another person</li>
+                <li>Uploading viruses or malicious code</li>
+                <li>Collecting user information without consent</li>
+                <li>Interfering with the Platform&apos;s operation</li>
+                <li>Engaging in fraudulent activities</li>
+                <li>Selling prohibited or illegal items</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">7. Limitation of Liability</h2>
+              <p className="text-gray-700 mb-4">
+                To the fullest extent permitted by law, Bhaba Limited shall not be liable for any indirect, 
+                incidental, special, consequential, or punitive damages, including but not limited to loss 
+                of profits, data, use, goodwill, or other intangible losses.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">8. Indemnification</h2>
+              <p className="text-gray-700 mb-4">
+                You agree to indemnify and hold harmless Bhaba Limited and its officers, directors, employees, 
+                and agents from any claims, damages, losses, liabilities, and expenses arising out of your 
+                use of the Platform or violation of these Terms.
+                </p>
+              </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">9. Governing Law</h2>
+              <p className="text-gray-700 mb-4">
+                These Terms shall be governed by and construed in accordance with the laws of the United 
+                Republic of Tanzania, without regard to its conflict of law provisions.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">10. Dispute Resolution</h2>
+              <p className="text-gray-700 mb-4">
+                Any disputes arising out of or relating to these Terms shall be resolved through binding 
+                arbitration in Dar es Salaam, Tanzania, in accordance with the Arbitration Act of Tanzania.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">11. Changes to Terms</h2>
+              <p className="text-gray-700 mb-4">
+                We reserve the right to modify these Terms at any time. We will provide notice of material 
+                changes by posting the new Terms on the Platform and updating the &quot;Last Updated&quot; date.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">12. Contact Information</h2>
+              <div className="bg-gray-50 p-4 rounded-md">
+                <p className="text-gray-700 mb-2">
+                  <strong>Bhaba Limited</strong><br />
+                  P.O. Box 12345<br />
+                  Dar es Salaam, Tanzania
+                </p>
+                <p className="text-gray-700 mb-2">
+                  <strong>Email:</strong> legal@bhabalimited.com<br />
+                  <strong>Phone:</strong> +255 618 205 278
+                </p>
+                <p className="text-gray-700">
+                  <strong>Hours:</strong> Monday - Friday, 8:00 AM - 5:00 PM EAT
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Related Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link href="/privacy-policy-full" className="p-4 bg-gray-50 rounded-md hover:bg-gray-100">
+              <h4 className="font-semibold text-green-600">Complete Privacy Policy</h4>
+              <p className="text-sm text-gray-600">Read our full privacy practices</p>
+            </Link>
+            <Link href="/terms-of-service" className="p-4 bg-gray-50 rounded-md hover:bg-gray-100">
+              <h4 className="font-semibold text-green-600">Summary Terms of Service</h4>
+              <p className="text-sm text-gray-600">Quick overview of our terms</p>
+            </Link>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default TermsOfServiceFull
+
+================================================================================
+
+FILE 19: C:\src\Bhaba_com\bhaba-marketplace\src\pages\terms-of-service.tsx
+================================================================================
+import React from 'react'
+import Head from 'next/head'
+import HeaderBar from '../components/HeaderBar'
+import Link from 'next/link'
+
+const TermsOfService: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>Terms of Service | Bhaba Marketplace</title>
+        <meta name="description" content="Bhaba Marketplace Terms of Service" />
+      </Head>
+
+      <HeaderBar 
+        showBackButton={true}
+        showSearch={false}
+        showViewToggle={false}
+        showSort={false}
+        showFilter={false}
+        onBack={() => window.history.back()}
+      />
+
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Terms of Service</h1>
+          
+          <div className="prose prose-lg max-w-none">
+            <p className="text-gray-600 mb-6">
+              Last updated: {new Date().toLocaleDateString()}
+            </p>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">1. Agreement to Terms</h2>
+              <p className="text-gray-700">
+                By accessing or using Bhaba Marketplace, you agree to be bound by these Terms of Service 
+                and all applicable laws and regulations.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">2. User Accounts</h2>
+              <p className="text-gray-700 mb-4">
+                When you create an account with us, you must provide accurate and complete information. 
+                You are responsible for maintaining the confidentiality of your account and password.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">3. Products and Services</h2>
+              <p className="text-gray-700 mb-4">
+                All products are subject to availability. We reserve the right to limit the quantities 
+                of any products that we offer and to discontinue any products at any time.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">4. Pricing and Payment</h2>
+              <p className="text-gray-700 mb-4">
+                All prices are in Tanzanian Shillings (TZS) and are subject to change without notice. 
+                We are not responsible for typographical errors regarding price or any other matter.
+              </p>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">5. Prohibited Uses</h2>
+              <p className="text-gray-700 mb-4">
+                You may not use our products:
+              </p>
+              <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                <li>For any unlawful purpose</li>
+                <li>To solicit others to perform or participate in any unlawful acts</li>
+                <li>To violate any international, federal, provincial, or state regulations</li>
+                <li>To infringe upon or violate our intellectual property rights</li>
+              </ul>
+            </section>
+
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">6. Contact Information</h2>
+              <p className="text-gray-700">
+                Questions about the Terms of Service should be sent to us at:
+              </p>
+              <p className="text-blue-600 mt-2">
+                Email: legal@bhabalimited.com<br />
+                Phone: +255 618 205 278
+              </p>
+            </section>
+
+            {/* <div className="border-t pt-6 mt-6">
+              <p className="text-sm text-gray-500">
+                For the complete and most updated version of our Terms of Service, please visit:{' '}
+                <a 
+                  href="https://bhabalimited.com/public/terms_of_service" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://bhabalimited.com/public/terms_of_service
+                </a>
+              </p>
+            </div> */}
+<div className="border-t pt-6 mt-6">
+  <p className="text-sm text-gray-500 mb-4">
+    For the complete and most updated version of our Terms of Service, please visit our full terms page:
+  </p>
+  <Link 
+    href="/terms-of-service-full" 
+    className="inline-flex items-center text-green-600 hover:text-green-800 font-semibold"
+  >
+    View Complete Terms of Service →
+  </Link>
+</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default TermsOfService
+
+================================================================================
+
+FILE 20: C:\src\Bhaba_com\bhaba-marketplace\src\styles\globals.css
+================================================================================
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Your custom styles below */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+
+
+================================================================================
+
+FILE 21: C:\src\Bhaba_com\bhaba-marketplace\src\types\global.d.ts
+================================================================================
+// global.d.ts
+interface Window {
+  gtag?: (...args: (string | number | Record<string, unknown>)[]) => void
+}
+
+================================================================================
+
+FILE 22: C:\src\Bhaba_com\bhaba-marketplace\src\types\index.ts
+================================================================================
+// src/types/index.ts
+export interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+export interface Vendor {
+  id: string
+  store_name: string
+  store_logo: string
+}
+
+export interface Category {
+  id: string
+  name: string
+}
+
+================================================================================
+
+FILE 23: C:\src\Bhaba_com\bhaba-marketplace\src\utils\api.ts
+================================================================================
+// src/utils/api.ts
+// const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://bhababackend.onrender.com";
+ //const API_BASE = "https://bhababackend.onrender.com";
+  const isBrowser = typeof window !== 'undefined';
+const isLocalhost = isBrowser && window.location.hostname === 'localhost';
+
+  const API_BASE = (
+  isLocalhost
+    ? 'https://bhababackend.onrender.com'
+    : 'http://192.168.1.165:5000'
+)
+
+export interface Product {
+  id: string;
+  productId: string;
+  product_name: string;
+  price: number;
+  description: string;
+  discount: number;
+  details: string;
+  tier_pricing: string[];
+  product_images: string[];
+  mobile_number: string;
+  isAvailable: boolean;
+  moq: number;
+  added_at: string;
+  vendorId: string;
+  vendorName: string;
+  categoryId: string;
+  categoryName: string;
+}
+
+export interface Vendor {
+  id: string;
+  store_name: string;
+  store_logo: string;
+}
+
+export interface Category {
+  id: string;
+  category_name: string;
+}
+
+export interface SearchParams {
+  q?: string;
+  limit?: number;
+  offset?: number;
+  category?: string;
+  vendor?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  sortBy?: 'relevance' | 'price-asc' | 'price-desc' | 'newest' | 'discount';
+}
+
+export interface SearchResult {
+  hits: Product[];
+  totalHits: number;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  // Add any other known properties here with their proper types
+  // If you need to allow additional dynamic properties, use a more specific type than 'any'
+  [x: string]: unknown; // Changed from 'any' to 'unknown'
+}
+
+/**
+ * Handles API responses with proper error handling
+ */
+const handleResponse = async <T = unknown>(response: Response): Promise<T> => {
+  try {
+    if (!response.ok) {
+      const text = await response.text()
+      try {
+        const error = JSON.parse(text)
+        throw new Error(error.message || `Request failed with status ${response.status}`)
+      } catch {
+        throw new Error(text || `Request failed with status ${response.status}`)
+      }
+    }
+
+    const contentType = response.headers.get('content-type')
+    if (contentType?.includes('application/json')) {
+      return response.json()
+    }
+    
+    return response.text() as unknown as T
+  } catch (error) {
+    console.error('Error handling response:', error)
+    throw error
+  }
+}
+
+/**
+ * Fetches a single product by ID
+ */
+export const fetchProductById = async (id: string): Promise<Product> => {
+  const response = await fetch(`${API_BASE}/products/${id}`);
+  return handleResponse<Product>(response);
+};
+
+/**
+ * Fetches all products with pagination
+ */
+export const fetchAllProducts = async (
+  // limit = 20,
+  limit = 10000,
+  offset = 0
+): Promise<PaginatedResponse<Product>> => {
+  const response = await fetch(
+    `${API_BASE}/products?limit=${limit}&offset=${offset}`
+  );
+  return handleResponse<PaginatedResponse<Product>>(response);
+};
+
+/**
+ * Fetches all vendors
+ */
+export const fetchVendors = async (): Promise<Vendor[]> => {
+  const response = await fetch(`${API_BASE}/vendors`);
+  return handleResponse<Vendor[]>(response);
+};
+
+/**
+ * Fetches a single vendor by ID
+ */
+export const fetchVendorById = async (vendorId: string): Promise<Vendor> => {
+  const response = await fetch(`${API_BASE}/vendors/${vendorId}`);
+  return handleResponse<Vendor>(response);
+};
+
+/**
+ * Fetches categories for a specific vendor
+ */
+export const fetchVendorCategories = async (
+  vendorId: string
+): Promise<Category[]> => {
+  const response = await fetch(`${API_BASE}/vendors/${vendorId}/categories`);
+  return handleResponse<Category[]>(response);
+};
+
+/**
+ * Fetches products for a specific vendor
+ */
+export const fetchVendorProducts = async (
+  vendorId: string,
+  limit = 20,
+  offset = 0
+): Promise<PaginatedResponse<Product>> => {
+  const response = await fetch(
+    `${API_BASE}/vendors/${vendorId}/products?limit=${limit}&offset=${offset}`
+  );
+  return handleResponse<PaginatedResponse<Product>>(response);
+};
+
+/**
+ * Fetches products by category
+ */
+export const fetchProductsByCategory = async (
+  categoryId: string,
+  limit = 20,
+  offset = 0
+): Promise<PaginatedResponse<Product>> => {
+  const response = await fetch(
+    `${API_BASE}/categories/${categoryId}/products?limit=${limit}&offset=${offset}`
+  );
+  return handleResponse<PaginatedResponse<Product>>(response);
+};
+
+/**
+ * Fetches all categories
+ */
+export const fetchAllCategories = async (): Promise<Category[]> => {
+  const response = await fetch(`${API_BASE}/categories`);
+  return handleResponse<Category[]>(response);
+};
+
+/**
+ * Searches products with advanced filters
+ */
+export const searchProducts = async (
+  params: SearchParams
+): Promise<SearchResult> => {
+  const queryParams = new URLSearchParams();
+
+  // Add all defined parameters to the query
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) {
+      queryParams.append(key, String(value));
+    }
+  });
+
+  const response = await fetch(`${API_BASE}/search?${queryParams.toString()}`);
+  return handleResponse<SearchResult>(response);
+};
+
+/**
+ * Client-side fetch with timeout
+ */
+export const fetchWithTimeout = async (
+  url: string,
+  options: RequestInit = {},
+  timeout = 8000
+): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    // Fix the error message concatenation
+    throw new Error(`Request timed out after ${timeout}ms: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+/**
+ * Slugify a product name for URLs
+ */
+// export const slugify = (text: string): string => {
+//   return text
+//     .toLowerCase()
+//     .replace(/[^a-z0-9]+/g, '-')
+//     .replace(/(^-|-$)/g, '');
+// };
+
+
+// export const slugify = (text: string, category?: string): string => {
+//   const baseSlug = text
+//     .toLowerCase()
+//     .replace(/[^a-z0-9]+/g, '-')
+//     .replace(/(^-|-$)/g, '');
+  
+//   if (category) {
+//     const categorySlug = category
+//       .toLowerCase()
+//       .replace(/[^a-z0-9]+/g, '-')
+//       .replace(/(^-|-$)/g, '');
+//     return `${categorySlug}/${baseSlug}`;
+//   }
+  
+//   return baseSlug;
+// };
+
+
+export function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+    .replace(/\-\-+/g, '-')   // Replace multiple - with single -
+    .replace(/^-+/, '')       // Trim - from start of text
+    .replace(/-+$/, '');      // Trim - from end of text
+}
+
+/**
+ * Format currency for display
+ */
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-TZ', {
+    style: 'currency',
+    currency: 'TZS'
+  }).format(amount);
+};
+
+/**
+ * Transform Firebase URL to ImageKit URL
+ */
+export const transformImageUrl = (firebaseUrl: string): string => {
+  if (!firebaseUrl) return '';
+  
+  try {
+    const urlObj = new URL(firebaseUrl);
+    const encodedPath = urlObj.pathname.split('/o/')[1];
+    if (!encodedPath) return firebaseUrl;
+
+    const decodedPath = decodeURIComponent(encodedPath);
+    return `https://ik.imagekit.io/3n0rrhtkz/firebase_files/${decodedPath}`;
+  } catch (error) {
+    console.error('Error transforming image URL:', error);
+    return firebaseUrl;
+  }
+};
+
+
+
+export async function fetchWithRetry<T>(url: string, retries = 3): Promise<T> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    return await response.json() as T
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      return fetchWithRetry<T>(url, retries - 1)
+    }
+    console.error(`Failed to fetch ${url} after ${retries} retries`)
+    throw error
+  }
+}
+
+================================================================================
+
+FILE 24: C:\src\Bhaba_com\bhaba-marketplace\src\utils\formatCurrency.ts
+================================================================================
+// src/utils/formatCurrency.ts
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-TZ', {
+    style: 'currency',
+    currency: 'TZS',
+    minimumFractionDigits: 0,
+  }).format(amount)
+}
+
+================================================================================
+
+FILE 25: C:\src\Bhaba_com\bhaba-marketplace\src\utils\sanitizeData.ts
+================================================================================
+// export function sanitizeData<T>(data: any): T {
+//   if (typeof data !== 'object' || data === null) {
+//     return data;
+//   }
+
+//   // Handle arrays
+//   if (Array.isArray(data)) {
+//     return data.map(item => sanitizeData(item)) as unknown as T;
+//   }
+
+//   // Handle objects
+//   const sanitized: Record<string, any> = {};
+//   for (const key in data) {
+//     if (Object.prototype.hasOwnProperty.call(data, key)) {
+//       let value = data[key];
+      
+//       // Remove non-printable characters from strings
+//       if (typeof value === 'string') {
+//         value = value.replace(/[^\x20-\x7E]/g, '');
+//       }
+      
+//       sanitized[key] = sanitizeData(value);
+//     }
+//   }
+
+//   return sanitized as T;
+// }
+
+// export function safeJsonParse<T>(jsonString: string): T | null {
+//   try {
+//     const parsed = JSON.parse(jsonString);
+//     return sanitizeData<T>(parsed);
+//   } catch (error) {
+//     console.error('JSON parse error:', error);
+//     return null;
+//   }
+// }
+
+================================================================================
+
+FILE 26: C:\src\Bhaba_com\bhaba-marketplace\.env
+================================================================================
+NEXT_PUBLIC_API_URL=https://bhaba11.onrender.com
+MEILI_HOST=https://ms-8a7e9781b939-25155.fra.meilisearch.io
+MEILI_API_KEY=7c878454e3956963982815862e56ec8e7e455718
+NEXT_PUBLIC_API_BASE=https://bhababackend.onrender.com
+
+================================================================================
+
+FILE 27: C:\src\Bhaba_com\bhaba-marketplace\scripts\generate-sitemap.ts
+================================================================================
+import * as fs from 'fs';
+import * as path from 'path';
+import { fetchAllProducts, PaginatedResponse, Product } from '../src/utils/api.js';
+
+const generateSitemap = async (): Promise<void> => {
+  try {
+    const baseUrl = 'https://yourstore.com'; // Change this to your actual domain
+
+    // Fetch products with typing
+    const productsResponse: PaginatedResponse<Product> = await fetchAllProducts();
+    const products = productsResponse.data;
+
+    // Build sitemap XML string
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  ${products
+    .map((product: Product) => {
+      const slug = `${product.product_name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')}_${product.id}`;
+
+      return `
+  <url>
+    <loc>${baseUrl}/product/${slug}</loc>
+    <lastmod>${new Date(product.added_at).toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    })
+    .join('')}
+</urlset>`;
+
+    // Ensure 'public' directory exists
+    const publicDir = path.join(process.cwd(), 'public');
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir);
+    }
+
+    // Write sitemap.xml to public folder
+    fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemap);
+
+    console.log('✅ Sitemap generated successfully!');
+  } catch (error) {
+    console.error('❌ Error generating sitemap:', error);
+  }
+};
+
+generateSitemap();
+
+================================================================================
+
