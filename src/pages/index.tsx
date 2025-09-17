@@ -661,7 +661,7 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
         {/* Products Grid */}
         {isLoading ? (
          // <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
-        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-5 gap-4 space-y-4">
+       <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
             {Array.from({ length: 12 }, (_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
@@ -775,4 +775,5 @@ return {
 }
 
 export default Home
+
 
