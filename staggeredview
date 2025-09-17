@@ -1,0 +1,3807 @@
+================================================================================
+CODE FILES COMPILATION
+Generated on: C:\src\Bhaba_com\bhaba-marketplace
+Total files: 17
+Comments removed: Yes
+================================================================================
+
+FILE STRUCTURE:
+----------------------------------------
+  1. C:\src\Bhaba_com\bhaba-marketplace\src\components\AppDownloadBanner.tsx
+  2. C:\src\Bhaba_com\bhaba-marketplace\src\components\BottomNavigation.tsx
+  3. C:\src\Bhaba_com\bhaba-marketplace\src\components\DynamicAspectRatioImage.tsx
+  4. C:\src\Bhaba_com\bhaba-marketplace\src\components\ErrorBoundary.tsx
+  5. C:\src\Bhaba_com\bhaba-marketplace\src\components\FilterModal.tsx
+  6. C:\src\Bhaba_com\bhaba-marketplace\src\components\Footer.tsx
+  7. C:\src\Bhaba_com\bhaba-marketplace\src\components\HeaderBar.tsx
+  8. C:\src\Bhaba_com\bhaba-marketplace\src\components\LazyImage.tsx
+  9. C:\src\Bhaba_com\bhaba-marketplace\src\components\LoadingOverlay.tsx
+ 10. C:\src\Bhaba_com\bhaba-marketplace\src\components\OptimizedImage.tsx
+ 11. C:\src\Bhaba_com\bhaba-marketplace\src\components\OptimizedProductCard.tsx
+ 12. C:\src\Bhaba_com\bhaba-marketplace\src\components\ProductCard.tsx
+ 13. C:\src\Bhaba_com\bhaba-marketplace\src\components\ProductGrid.tsx
+ 14. C:\src\Bhaba_com\bhaba-marketplace\src\components\SEOHead.tsx
+ 15. C:\src\Bhaba_com\bhaba-marketplace\src\pages\product\[category]\[slug].tsx
+ 16. C:\src\Bhaba_com\bhaba-marketplace\src\pages\category\[category].tsx
+ 17. C:\src\Bhaba_com\bhaba-marketplace\src\pages\index.tsx
+
+================================================================================
+
+FILE 1: C:\src\Bhaba_com\bhaba-marketplace\src\components\AppDownloadBanner.tsx
+================================================================================
+import React, { useState, useEffect } from 'react'
+import { X, Download, Smartphone, Star } from 'lucide-react'
+
+interface AppDownloadBannerProps {
+  position?: 'top' | 'bottom' | 'floating'
+  className?: string
+}
+
+const AppDownloadBanner: React.FC<AppDownloadBannerProps> = ({
+  position = 'floating',
+  className = ''
+}) => {
+  const [isVisible, setIsVisible] = useState(false)
+  const [isDismissed, setIsDismissed] = useState(false)
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('bhaba-app-banner-dismissed')
+    if (dismissed) {
+      setIsDismissed(true)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setIsVisible(true)
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  const handleDismiss = () => {
+    setIsVisible(false)
+    setIsDismissed(true)
+    localStorage.setItem('bhaba-app-banner-dismissed', 'true')
+  }
+
+  const handleDownload = () => {
+    window.open('https://play.google.com/store/apps/details?id=com.vendor.bhaba', '_blank')
+  }
+
+  if (isDismissed || !isVisible) return null
+
+  const bannerClasses = {
+    top: 'fixed top-16 left-0 right-0 z-30',
+    bottom: 'fixed bottom-16 left-0 right-0 z-30',
+    floating: 'fixed bottom-20 left-4 right-4 z-30 md:left-auto md:right-4 md:w-80'
+  }
+
+  return (
+    <div className={`${bannerClasses[position]} ${className}`}>
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-lg shadow-2xl mx-auto max-w-sm md:max-w-md animate-in slide-in-from-bottom duration-300">
+        {}
+        {position === 'floating' && (
+          <div className="relative overflow-hidden">
+            {}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0 bg-repeat opacity-20" style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3C/g%3E%3C/svg%3E")`
+              }} />
+            </div>
+
+            <div className="relative p-4">
+              <button
+                onClick={handleDismiss}
+                className="absolute top-2 right-2 p-1 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <Smartphone className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">!</span>
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-sm truncate">
+                    Download Bhaba App
+                  </h3>
+                  <p className="text-xs text-white/80 line-clamp-2">
+                    Get the best shopping experience on mobile
+                  </p>
+                  <div className="flex items-center mt-1">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <span className="text-xs text-white/80 ml-1">4.8 (2.1k)</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleDownload}
+                className="w-full mt-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 font-medium text-sm"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Free</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {}
+        {(position === 'top' || position === 'bottom') && (
+          <div className="relative overflow-hidden">
+            <div className="flex items-center justify-between p-3 md:p-4">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="hidden sm:block">
+                  <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm md:text-base">
+                    Get the Bhaba App
+                  </h3>
+                  <p className="text-xs text-white/80 truncate">
+                    Better shopping experience on your phone
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleDownload}
+                  className="bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center space-x-1"
+                >
+                  <Download className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+
+                <button
+                  onClick={handleDismiss}
+                  className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default AppDownloadBanner
+
+================================================================================
+
+FILE 2: C:\src\Bhaba_com\bhaba-marketplace\src\components\BottomNavigation.tsx
+================================================================================
+import React, { useState, useCallback } from 'react'
+import Link from 'next/link'
+import { Home, ShoppingBag, User, Box, Download, Star } from 'lucide-react'
+
+interface BottomNavigationProps {
+  onWholesaleClick: () => void
+}
+
+const BottomNavigation: React.FC<BottomNavigationProps> = ({ onWholesaleClick }) => {
+  const [showAppPrompt, setShowAppPrompt] = useState(false)
+
+  const handleAppDownload = useCallback(() => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'app_download_click', {
+        event_category: 'engagement',
+        event_label: 'bottom_navigation'
+      })
+    }
+
+    window.open('https://play.google.com/store/apps/details?id=com.bhaba.marketplace', '_blank')
+  }, [])
+
+  const navigationItems = [
+    {
+      href: '/',
+      icon: Home,
+      label: 'Home',
+      action: null
+    },
+    {
+      href: null,
+      icon: Box,
+      label: 'Wholesale',
+      action: onWholesaleClick
+    },
+    {
+      href: null,
+      icon: Download,
+      label: 'Get App',
+      action: handleAppDownload,
+      highlight: true
+    },
+    {
+      href: null,
+      icon: ShoppingBag,
+      label: 'Cart',
+      action: () => setShowAppPrompt(true)
+    },
+    {
+      href: '/account',
+      icon: User,
+      label: 'Account',
+      action: null
+    }
+  ]
+
+  return (
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-500 to-purple-600 border-t border-white/20 shadow-lg z-50 safe-area-inset-bottom">
+        <div className="flex justify-around items-center py-2 px-1">
+          {navigationItems.map((item, index) => {
+            const IconComponent = item.icon
+
+            if (item.href) {
+              return (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className={`flex flex-col items-center p-2 text-white hover:text-gray-200 transition-all duration-200 hover:scale-105 ${
+                    item.highlight ? 'bg-white/20 rounded-lg backdrop-blur-sm' : ''
+                  }`}
+                >
+                  <IconComponent className="h-6 w-6" />
+                  <span className="text-xs mt-1">{item.label}</span>
+                  {item.highlight && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                  )}
+                </Link>
+              )
+            }
+
+            return (
+              <button
+                key={index}
+                onClick={item.action || undefined}
+                className={`flex flex-col items-center p-2 text-white hover:text-gray-200 transition-all duration-200 hover:scale-105 relative ${
+                  item.highlight ? 'bg-white/20 rounded-lg backdrop-blur-sm' : ''
+                }`}
+              >
+                <IconComponent className="h-6 w-6" />
+                <span className="text-xs mt-1">{item.label}</span>
+                {item.highlight && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {}
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center space-x-1 animate-bounce">
+            <Star className="h-3 w-3" />
+            <span>New App!</span>
+          </div>
+        </div>
+      </nav>
+
+      {}
+      {showAppPrompt && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Download className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Download Our App</h3>
+              <p className="text-gray-600 mb-6">
+                Get the full Bhaba experience with our mobile app. Shop easier, faster, and get exclusive deals!
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={handleAppDownload}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Download Now
+                </button>
+                <button
+                  onClick={() => setShowAppPrompt(false)}
+                  className="w-full text-gray-500 py-2"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+export default BottomNavigation
+
+================================================================================
+
+FILE 3: C:\src\Bhaba_com\bhaba-marketplace\src\components\DynamicAspectRatioImage.tsx
+================================================================================
+import React, { useEffect, useState } from 'react'
+import Image from 'next/image'
+
+type ImageUrl = string | string[]
+
+interface AspectRatioImageProps {
+  imageUrl: ImageUrl
+  className?: string
+  containerClassName?: string
+}
+
+interface AspectRatioData {
+  url: string
+  aspectRatio: number
+  error: boolean
+}
+
+const DynamicAspectRatioImage: React.FC<AspectRatioImageProps> = ({
+  imageUrl,
+  className = 'object-cover rounded',
+  containerClassName = ''
+}) => {
+  const [images, setImages] = useState<AspectRatioData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [defaultAspectRatio] = useState(1)
+
+  useEffect(() => {
+    const urls = typeof imageUrl === 'string' ? [imageUrl] : imageUrl
+
+    const loadImage = (url: string): Promise<AspectRatioData> => {
+      return new Promise((resolve) => {
+        const img = new window.Image()
+        img.src = url
+
+        img.onload = () => {
+          const aspectRatio = img.naturalWidth / img.naturalHeight
+          resolve({ url, aspectRatio, error: false })
+        }
+
+        img.onerror = () => {
+          resolve({ url, aspectRatio: defaultAspectRatio, error: true })
+        }
+      })
+    }
+
+    const timer = setTimeout(() => {
+      Promise.all(urls.map(loadImage)).then((results) => {
+        setImages(results)
+        setLoading(false)
+      })
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [imageUrl, defaultAspectRatio])
+
+  if (loading) {
+    return (
+      <div
+        className={`relative bg-gray-100 animate-pulse ${containerClassName}`}
+        style={{ aspectRatio: defaultAspectRatio }}
+      >
+        <div className="absolute inset-0 flex justify-center items-center">
+          <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {images.map((img, index) => (
+        <div
+          key={index}
+          className={`relative ${containerClassName}`}
+          style={{ aspectRatio: img.aspectRatio }}
+        >
+          {img.error ? (
+            <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-500 text-sm">
+              Image failed to load
+            </div>
+          ) : (
+            <Image
+              src={img.url}
+              alt={`dynamic-img-${index}`}
+              fill
+              className={className}
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.onerror = null
+                target.src = '/placeholder-image.jpg'
+              }}
+            />
+          )}
+        </div>
+      ))}
+    </>
+  )
+}
+
+export default React.memo(DynamicAspectRatioImage)
+
+================================================================================
+
+FILE 4: C:\src\Bhaba_com\bhaba-marketplace\src\components\ErrorBoundary.tsx
+================================================================================
+import React, { Component, ReactNode } from 'react'
+import { AlertCircle, RefreshCw, Home } from 'lucide-react'
+
+interface Props {
+  children: ReactNode
+  fallback?: ReactNode
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
+}
+
+interface State {
+  hasError: boolean
+  error?: Error
+}
+
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo)
+
+    this.props.onError?.(error, errorInfo)
+
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'exception', {
+        description: error.message,
+        fatal: false,
+        custom_map: {
+          component_stack: errorInfo.componentStack
+        }
+      })
+    }
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: undefined })
+  }
+
+  handleGoHome = () => {
+    window.location.href = '/'
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback
+      }
+
+      return (
+        <div className="min-h-[400px] flex items-center justify-center p-4">
+          <div className="max-w-md w-full text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Something went wrong
+            </h2>
+
+            <p className="text-gray-600 mb-6">
+              We&apos;re sorry, but something unexpected happened. Please try refreshing the page or go back to the homepage.
+            </p>
+
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mb-6 text-left">
+                <summary className="cursor-pointer text-sm font-medium text-gray-700 mb-2">
+                  Error Details (Development Only)
+                </summary>
+                <pre className="text-xs bg-gray-100 p-3 rounded-md overflow-auto max-h-32 text-red-600">
+                  {this.state.error.message}
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={this.handleRetry}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </button>
+
+              <button
+                onClick={this.handleGoHome}
+                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Go Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+export const ErrorBoundaryWrapper: React.FC<{
+  children: ReactNode
+  fallback?: ReactNode
+}> = ({ children, fallback }) => {
+  return (
+    <ErrorBoundary fallback={fallback}>
+      {children}
+    </ErrorBoundary>
+  )
+}
+
+export default ErrorBoundary
+
+================================================================================
+
+FILE 5: C:\src\Bhaba_com\bhaba-marketplace\src\components\FilterModal.tsx
+================================================================================
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import { X, Search, Check, Sliders, RefreshCw } from 'lucide-react'
+
+interface Vendor {
+  id: string
+  store_name: string
+  store_logo: string
+}
+
+interface Category {
+  id: string
+  category_name: string
+}
+
+interface Filters {
+  categories: string[]
+  vendors: string[]
+  priceRange: [number, number]
+  inStock: boolean
+}
+
+interface FilterModalProps {
+  isOpen: boolean
+  onClose: () => void
+  categories: Category[]
+  vendors: Vendor[]
+  filters: Filters
+  onFiltersChange: (filters: Filters) => void
+}
+
+const FilterModal: React.FC<FilterModalProps> = ({
+  isOpen,
+  onClose,
+  categories,
+  vendors,
+  filters,
+  onFiltersChange
+}) => {
+  const [localFilters, setLocalFilters] = useState<Filters>(filters)
+  const [categorySearch, setCategorySearch] = useState('')
+  const [vendorSearch, setVendorSearch] = useState('')
+  const [activeTab, setActiveTab] = useState<'categories' | 'vendors' | 'price' | 'availability'>('categories')
+  const [hasChanges, setHasChanges] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      setLocalFilters(filters)
+      setHasChanges(false)
+      setCategorySearch('')
+      setVendorSearch('')
+    }
+  }, [isOpen, filters])
+
+  useEffect(() => {
+    const filtersChanged = JSON.stringify(localFilters) !== JSON.stringify(filters)
+    setHasChanges(filtersChanged)
+  }, [localFilters, filters])
+
+  const filteredCategories = useMemo(() => {
+    if (!categorySearch) return categories
+    return categories.filter(category =>
+      category.category_name.toLowerCase().includes(categorySearch.toLowerCase())
+    )
+  }, [categories, categorySearch])
+
+  const filteredVendors = useMemo(() => {
+    if (!vendorSearch) return vendors
+    return vendors.filter(vendor =>
+      vendor.store_name.toLowerCase().includes(vendorSearch.toLowerCase())
+    )
+  }, [vendors, vendorSearch])
+
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      categories: prev.categories.includes(categoryId)
+        ? prev.categories.filter(id => id !== categoryId)
+        : [...prev.categories, categoryId]
+    }))
+  }, [])
+
+  const handleVendorChange = useCallback((vendorId: string) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      vendors: prev.vendors.includes(vendorId)
+        ? prev.vendors.filter(id => id !== vendorId)
+        : [...prev.vendors, vendorId]
+    }))
+  }, [])
+
+  const handlePriceChange = useCallback((type: 'min' | 'max', value: number) => {
+    setLocalFilters(prev => ({
+      ...prev,
+      priceRange: type === 'min'
+        ? [value, prev.priceRange[1]]
+        : [prev.priceRange[0], value]
+    }))
+  }, [])
+
+  const clearFilters = useCallback(() => {
+    const clearedFilters = {
+      categories: [],
+      vendors: [],
+      priceRange: [0, 10000000] as [number, number],
+      inStock: false
+    }
+    setLocalFilters(clearedFilters)
+  }, [])
+
+  const applyFilters = useCallback(() => {
+    onFiltersChange(localFilters)
+    onClose()
+  }, [localFilters, onFiltersChange, onClose])
+
+  const resetToOriginal = useCallback(() => {
+    setLocalFilters(filters)
+    setHasChanges(false)
+  }, [filters])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isOpen) return
+
+      if (event.key === 'Escape') {
+        onClose()
+      }
+      if (event.key === 'Enter' && hasChanges) {
+        applyFilters()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose, hasChanges, applyFilters])
+
+  if (!isOpen) return null
+
+  const tabs = [
+    { id: 'categories', label: 'Categories', count: localFilters.categories.length },
+    { id: 'vendors', label: 'Vendors', count: localFilters.vendors.length },
+    { id: 'price', label: 'Price', count: localFilters.priceRange[0] > 0 || localFilters.priceRange[1] < 10000000 ? 1 : 0 },
+    { id: 'availability', label: 'Stock', count: localFilters.inStock ? 1 : 0 },
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl">
+        {}
+        <div className="sticky top-0 bg-white border-b px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Sliders className="h-6 w-6 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-900">Filters</h2>
+            {hasChanges && (
+              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                Changes pending
+              </span>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close filters"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {}
+        <div className="border-b">
+          <div className="flex overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+              >
+                <span>{tab.label}</span>
+                {tab.count > 0 && (
+                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {}
+        <div className="p-4 sm:p-6 max-h-96 overflow-y-auto">
+          {}
+          {activeTab === 'categories' && (
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search categories..."
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {filteredCategories.map((category) => (
+                  <label
+                    key={category.id}
+                    className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={localFilters.categories.includes(category.id)}
+                        onChange={() => handleCategoryChange(category.id)}
+                        className="sr-only"
+                      />
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        localFilters.categories.includes(category.id)
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'border-gray-300 hover:border-blue-400'
+                      }`}>
+                        {localFilters.categories.includes(category.id) && (
+                          <Check className="h-3 w-3 text-white" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-gray-700 flex-1">{category.category_name}</span>
+                  </label>
+                ))}
+
+                {filteredCategories.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No categories found matching "{categorySearch}"</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {}
+          {activeTab === 'vendors' && (
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search vendors..."
+                  value={vendorSearch}
+                  onChange={(e) => setVendorSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {filteredVendors.map((vendor) => (
+                  <label
+                    key={vendor.id}
+                    className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
+                  >
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={localFilters.vendors.includes(vendor.id)}
+                        onChange={() => handleVendorChange(vendor.id)}
+                        className="sr-only"
+                      />
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                        localFilters.vendors.includes(vendor.id)
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'border-gray-300 hover:border-blue-400'
+                      }`}>
+                        {localFilters.vendors.includes(vendor.id) && (
+                          <Check className="h-3 w-3 text-white" />
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-gray-700 flex-1">{vendor.store_name}</span>
+                  </label>
+                ))}
+
+                {filteredVendors.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No vendors found matching "{vendorSearch}"</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {}
+          {activeTab === 'price' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-4">Price Range (TZS)</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Minimum
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        value={localFilters.priceRange[0] || ''}
+                        onChange={(e) => handlePriceChange('min', parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Maximum
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="10,000,000"
+                        value={localFilters.priceRange[1] === 10000000 ? '' : localFilters.priceRange[1]}
+                        onChange={(e) => handlePriceChange('max', parseInt(e.target.value) || 10000000)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {}
+                  <div className="px-2">
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min="0"
+                        max="1000000"
+                        step="10000"
+                        value={Math.min(localFilters.priceRange[0], 1000000)}
+                        onChange={(e) => handlePriceChange('min', parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb"
+                      />
+                      <input
+                        type="range"
+                        min="0"
+                        max="1000000"
+                        step="10000"
+                        value={Math.min(localFilters.priceRange[1], 1000000)}
+                        onChange={(e) => handlePriceChange('max', parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb mt-2"
+                      />
+                    </div>
+
+                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                      <span>TZS 0</span>
+                      <span>TZS 1M+</span>
+                    </div>
+                  </div>
+
+                  {}
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: 'Under 50K', range: [0, 50000] },
+                      { label: '50K - 200K', range: [50000, 200000] },
+                      { label: '200K - 500K', range: [200000, 500000] },
+                      { label: '500K+', range: [500000, 10000000] },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        onClick={() => setLocalFilters(prev => ({ ...prev, priceRange: preset.range as [number, number] }))}
+                        className={`px-3 py-1.5 text-xs rounded-full transition-colors ${
+                          localFilters.priceRange[0] === preset.range[0] &&
+                          localFilters.priceRange[1] === preset.range[1]
+                            ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {}
+          {activeTab === 'availability' && (
+            <div className="space-y-4">
+              <h3 className="font-semibold text-gray-900">Product Availability</h3>
+
+              <label className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={localFilters.inStock}
+                    onChange={(e) => setLocalFilters(prev => ({ ...prev, inStock: e.target.checked }))}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                    localFilters.inStock
+                      ? 'bg-green-600 border-green-600'
+                      : 'border-gray-300 hover:border-green-400'
+                  }`}>
+                    {localFilters.inStock && (
+                      <Check className="h-3 w-3 text-white" />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-900 font-medium">In Stock Only</span>
+                  <p className="text-sm text-gray-500">Show only products that are currently available</p>
+                </div>
+              </label>
+            </div>
+          )}
+        </div>
+
+        {}
+        <div className="sticky bottom-0 bg-white border-t px-4 sm:px-6 py-4">
+          <div className="flex gap-3">
+            <button
+              onClick={clearFilters}
+              className="flex items-center justify-center gap-2 flex-1 bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Clear All
+            </button>
+
+            {hasChanges && (
+              <button
+                onClick={resetToOriginal}
+                className="flex-1 bg-orange-100 text-orange-800 py-3 px-4 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
+              >
+                Reset
+              </button>
+            )}
+
+            <button
+              onClick={applyFilters}
+              className={`flex-1 py-3 px-4 rounded-lg transition-colors text-sm font-medium ${
+                hasChanges
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-blue-100 text-blue-800 cursor-default'
+              }`}
+              disabled={!hasChanges}
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default FilterModal
+
+================================================================================
+
+FILE 6: C:\src\Bhaba_com\bhaba-marketplace\src\components\Footer.tsx
+================================================================================
+import React from 'react'
+import Link from 'next/link'
+
+const Footer: React.FC = () => {
+  return (
+    <footer className="bg-gray-800 text-white py-8 mt-16">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Bhaba Marketplace</h3>
+            <p className="text-gray-300 text-sm">
+              Your trusted online marketplace for quality products in Tanzania.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" className="text-gray-300 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms-of-service" className="text-gray-300 hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+{}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
+            <div className="text-sm text-gray-300 space-y-2">
+              <p>Email: info@bhabalimited.com</p>
+              <p>Phone: +255 618 205 278</p>
+              <p>Dar es Salaam, Tanzania</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-700 mt-8 pt-6 text-center">
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} Bhaba Limited. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+export default Footer
+
+================================================================================
+
+FILE 7: C:\src\Bhaba_com\bhaba-marketplace\src\components\HeaderBar.tsx
+================================================================================
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { Search, Filter, Grid, List, ChevronLeft, ArrowUpDown, Menu, X, Sparkles, Bell } from 'lucide-react';
+import Head from 'next/head';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useDebounce } from '../hooks/useDebounce';
+
+interface HeaderBarProps {
+  searchQuery?: string;
+  setSearchQuery?: (query: string) => void;
+  viewMode?: 'grid' | 'list';
+  setViewMode?: (mode: 'grid' | 'list') => void;
+  setShowFilters?: (show: boolean) => void;
+  sortOption?: string;
+  setSortOption?: (option: string) => void;
+  showBackButton?: boolean;
+  onBack?: () => void;
+  showSearch?: boolean;
+  showViewToggle?: boolean;
+  showSort?: boolean;
+  showFilter?: boolean;
+}
+
+const HeaderBar = memo<HeaderBarProps>(({
+  searchQuery = '',
+  setSearchQuery = () => {},
+  viewMode = 'grid',
+  setViewMode = () => {},
+  setShowFilters = () => {},
+  sortOption = 'relevance',
+  setSortOption = () => {},
+  showBackButton = false,
+  onBack = () => {},
+  showSearch = true,
+  showViewToggle = true,
+  showSort = true,
+  showFilter = true,
+}) => {
+  const [showSortPopup, setShowSortPopup] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const sortPopupRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const sortOptions = [
+    { value: 'relevance', label: 'Relevance', icon: '⭐' },
+    { value: 'price-asc', label: 'Price: Low to High', icon: '📈' },
+    { value: 'price-desc', label: 'Price: High to Low', icon: '📉' },
+    { value: 'newest', label: 'Newest', icon: '🆕' },
+    { value: 'discount', label: 'Best Discount', icon: '🏷️' },
+  ];
+
+  const handleSortChange = useCallback((option: string) => {
+    setSortOption(option);
+    setShowSortPopup(false);
+  }, [setSortOption]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrollY(currentScrollY);
+      setIsScrolled(currentScrollY > 20);
+    };
+
+    let ticking = false;
+    const throttledScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    return () => window.removeEventListener('scroll', throttledScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortPopupRef.current && !sortPopupRef.current.contains(event.target as Node)) {
+        setShowSortPopup(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearchFocus = useCallback(() => {
+    setIsSearchFocused(true);
+  }, []);
+
+  const handleSearchBlur = useCallback(() => {
+    setIsSearchFocused(false);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowSortPopup(false);
+        setShowMobileMenu(false);
+        searchInputRef.current?.blur();
+      }
+      if (event.key === '/' && !isSearchFocused) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isSearchFocused]);
+
+  useEffect(() => {
+    if (debouncedSearchQuery.trim() === '') return;
+    console.log('Searching for:', debouncedSearchQuery);
+  }, [debouncedSearchQuery]);
+
+  const headerClasses = `sticky top-0 z-40 transition-all duration-300 ${
+    isScrolled
+      ? 'bg-white/95 backdrop-blur-xl shadow-xl border-b border-gray-200/50'
+      : 'bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 shadow-lg'
+  }`;
+
+  const textColor = isScrolled ? 'text-gray-900' : 'text-white';
+  const buttonColor = isScrolled
+    ? 'text-gray-700 hover:bg-gray-100'
+    : 'text-white hover:bg-white/20';
+
+  return (
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+      </Head>
+
+      {}
+      {showMobileMenu && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 lg:hidden animate-in fade-in duration-200"
+          onClick={() => setShowMobileMenu(false)}
+        >
+          <div
+            className="absolute right-0 top-0 h-full w-80 bg-white/95 backdrop-blur-xl shadow-2xl border-l border-gray-200/50 animate-in slide-in-from-right duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-gray-200/80 bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-bold text-gray-900 text-lg">Menu</h3>
+                </div>
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                >
+                  <X className="h-5 w-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
+            <nav className="p-6">
+              <div className="space-y-2">
+                {[
+                  { href: '/privacy-policy', label: 'Privacy Policy', icon: '🛡️' },
+                  { href: '/terms-of-service', label: 'Terms of Service', icon: '📋' },
+                  { href: '/privacy-policy-full', label: 'Full Privacy Policy', icon: '🔒' },
+                  { href: '/terms-of-service-full', label: 'Full Terms of Service', icon: '📄' },
+                  { href: '/account', label: 'Account', icon: '👤' },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 py-3 px-4 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 group"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    <span className="text-lg group-hover:scale-110 transition-transform duration-200">
+                      {item.icon}
+                    </span>
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      <header className={headerClasses}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
+          <div className="flex items-center justify-between h-16 sm:h-18">
+            {}
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-shrink-0">
+              {}
+              <button
+                onClick={() => setShowMobileMenu(true)}
+                className={`lg:hidden p-2 rounded-xl transition-all duration-200 hover:scale-105 ${buttonColor}`}
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+
+              {showBackButton && (
+                <button
+                  onClick={onBack}
+                  className={`p-2 rounded-xl transition-all duration-200 hover:scale-105 ${buttonColor}`}
+                  aria-label="Go back"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+              )}
+
+              <Link href="/" className="flex items-center group min-w-0">
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-200 flex-shrink-0">
+                  <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg"></div>
+                  <Image
+                    src="/Bhaba_logo.png"
+                    alt="Bhaba Logo"
+                    fill
+                    className="rounded-xl p-1 object-contain"
+                    priority
+                    sizes="48px"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-300 truncate ${textColor}`}>
+                    Bhaba
+                  </h1>
+                  <p className={`text-xs transition-colors duration-300 hidden sm:block ${
+                    isScrolled ? 'text-gray-500' : 'text-white/80'
+                  }`}>
+                    Discover Amazing
+                  </p>
+                </div>
+              </Link>
+            </div>
+
+            {}
+            <nav className="hidden lg:flex items-center space-x-1 flex-shrink-0">
+              {[
+                { href: '/privacy-policy', label: 'Privacy' },
+                { href: '/terms-of-service', label: 'Terms' },
+                { href: '/account', label: 'Account' },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 hover:scale-105 ${
+                    isScrolled
+                      ? 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                      : 'text-white hover:text-gray-200 hover:bg-white/20'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            {}
+            {showSearch && (
+              <div className="flex-1 mx-2 sm:mx-4 lg:mx-6 min-w-0 max-w-2xl">
+                <div className={`relative transition-all duration-300 ${
+                  isSearchFocused ? 'transform scale-105' : ''
+                }`}>
+                  <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 transition-colors duration-200 ${
+                    isSearchFocused ? 'text-blue-500' : 'text-gray-400'
+                  }`} />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search for amazing products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={handleSearchFocus}
+                    onBlur={handleSearchBlur}
+                    className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-white/95 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder-gray-500 shadow-lg hover:shadow-xl transition-all duration-300"
+                  />
+                  {searchQuery && (
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    </div>
+                  )}
+
+                  {}
+                </div>
+              </div>
+            )}
+
+            {}
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {}
+              <button
+                className={`p-2.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg relative ${buttonColor}`}
+                title="Notifications"
+              >
+                <Bell className="h-4 w-4" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs flex items-center justify-center">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                </span>
+              </button>
+
+              {}
+              {showSort && (
+                <>
+                  <div className="hidden sm:block">
+                    <select
+                      value={sortOption}
+                      onChange={(e) => setSortOption(e.target.value)}
+                      className="text-sm border border-gray-200/50 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/95 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer"
+                    >
+                      {sortOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.icon} {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {}
+                  <div className="sm:hidden relative" ref={sortPopupRef}>
+                    <button
+                      onClick={() => setShowSortPopup(!showSortPopup)}
+                      className={`p-2.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg ${
+                        showSortPopup
+                          ? 'bg-blue-500 text-white shadow-blue-500/50'
+                          : buttonColor
+                      }`}
+                      title="Sort options"
+                    >
+                      <ArrowUpDown className="h-4 w-4" />
+                    </button>
+
+                    {showSortPopup && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {sortOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => handleSortChange(option.value)}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 text-sm transition-all duration-200 hover:scale-95 ${
+                              sortOption === option.value
+                                ? 'bg-blue-100 text-blue-800 font-medium'
+                                : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="text-base">{option.icon}</span>
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {}
+              {showFilter && (
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className={`p-2.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg ${buttonColor}`}
+                  title="Filters"
+                >
+                  <Filter className="h-4 w-4" />
+                </button>
+              )}
+
+              {}
+              {showViewToggle && (
+                <button
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                  className={`p-2.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg ${buttonColor}`}
+                  title={`Switch to ${viewMode === 'grid' ? 'list' : 'grid'} view`}
+                >
+                  {viewMode === 'grid' ? (
+                    <List className="h-4 w-4" />
+                  ) : (
+                    <Grid className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-30"></div>
+      </header>
+    </>
+  );
+});
+
+HeaderBar.displayName = 'HeaderBar';
+
+export default HeaderBar;
+
+================================================================================
+
+FILE 8: C:\src\Bhaba_com\bhaba-marketplace\src\components\LazyImage.tsx
+================================================================================
+import { useState } from 'react'
+import Image from 'next/image'
+import { AlertCircle } from 'lucide-react'
+
+interface LazyImageProps {
+  src: string
+  alt: string
+  width: number
+  height: number
+  className?: string
+}
+
+const LazyImage: React.FC<LazyImageProps> = ({ src, alt, width, height, className }) => {
+  const [hasError, setHasError] = useState(false)
+
+  if (hasError) {
+    return (
+      <div className={`${className} bg-gray-100 flex items-center justify-center`}>
+        <div className="text-center p-4">
+          <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Image not available</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      loading="lazy"
+      onError={() => setHasError(true)}
+    />
+  )
+}
+
+export default LazyImage
+
+================================================================================
+
+FILE 9: C:\src\Bhaba_com\bhaba-marketplace\src\components\LoadingOverlay.tsx
+================================================================================
+import React from 'react'
+
+const LoadingOverlay = () => {
+  return (
+    <div className="fixed inset-0 bg-white bg-opacity-90 z-50 flex items-center justify-center">
+      <div className="flex space-x-2">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="w-4 h-4 rounded-full animate-bounce"
+            style={{
+              backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'][i],
+              animationDelay: `${i * 0.1}s`
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default LoadingOverlay
+
+================================================================================
+
+FILE 10: C:\src\Bhaba_com\bhaba-marketplace\src\components\OptimizedImage.tsx
+================================================================================
+import React, { useState, useCallback } from 'react'
+import Image from 'next/image'
+import { AlertCircle } from 'lucide-react'
+
+interface OptimizedImageProps {
+  src: string
+  alt: string
+  width?: number
+  height?: number
+  fill?: boolean
+  className?: string
+  priority?: boolean
+  sizes?: string
+  quality?: number
+  onLoad?: () => void
+  onError?: () => void
+  fallbackSrc?: string
+}
+
+const OptimizedImage: React.FC<OptimizedImageProps> = ({
+  src,
+  alt,
+  width,
+  height,
+  fill = false,
+  className = '',
+  priority = false,
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
+  quality = 75,
+  onLoad,
+  onError,
+  fallbackSrc = '/placeholder-image.jpg'
+}) => {
+  const [imgSrc, setImgSrc] = useState(src)
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
+
+  const handleLoad = useCallback(() => {
+    setIsLoading(false)
+    onLoad?.()
+  }, [onLoad])
+
+  const handleError = useCallback(() => {
+    if (imgSrc !== fallbackSrc) {
+      setImgSrc(fallbackSrc)
+    } else {
+      setHasError(true)
+      setIsLoading(false)
+    }
+    onError?.()
+  }, [imgSrc, fallbackSrc, onError])
+
+  if (hasError) {
+    return (
+      <div className={`bg-gray-100 flex items-center justify-center ${className}`}>
+        <div className="text-center p-4">
+          <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">Image not available</p>
+        </div>
+      </div>
+    )
+  }
+
+  const imageProps = {
+    src: imgSrc,
+    alt,
+    onLoad: handleLoad,
+    onError: handleError,
+    className: `${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`,
+    priority,
+    quality,
+    sizes,
+    ...(fill ? { fill: true } : { width, height })
+  }
+
+  return (
+    <div className="relative">
+      {isLoading && (
+        <div className={`absolute inset-0 bg-gray-200 animate-pulse ${fill ? '' : 'w-full h-full'}`} />
+      )}
+      <Image {...imageProps} />
+    </div>
+  )
+}
+
+export default OptimizedImage
+
+================================================================================
+
+FILE 11: C:\src\Bhaba_com\bhaba-marketplace\src\components\OptimizedProductCard.tsx
+================================================================================
+import React, { memo, useState, useCallback } from 'react'
+import { Phone, MessageCircle } from 'lucide-react'
+import Image from 'next/image'
+import { formatCurrency } from '@/utils/formatCurrency'
+import { useRouter } from 'next/router'
+import { slugify } from '@/utils/api'
+
+interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+interface ProductCardProps {
+  product: Product
+  onClick?: (product: Product) => void
+  viewMode?: 'grid' | 'list'
+  priority?: boolean
+  sizes?: string
+}
+
+const OptimizedProductCard = memo<ProductCardProps>(({
+  product,
+  onClick,
+  viewMode = 'grid',
+  priority = false,
+  sizes = "(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+}) => {
+  const router = useRouter()
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  const discountedPrice = product.discount > 0
+    ? product.price * (1 - product.discount / 100)
+    : product.price
+
+  const handleContactVendor = useCallback((e: React.MouseEvent, type: 'whatsapp' | 'call') => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const hardcodedNumber = '0618205278'
+    const productImage = product.product_images?.[0] || ''
+    const originalPrice = formatCurrency(product.price)
+    const finalPrice = formatCurrency(discountedPrice)
+    const discountText = product.discount > 0 ? ` (${product.discount}% OFF)` : ''
+
+    let message = `Hi, I'm interested in your product:\n\n`
+    message += `*Product Name:* ${product.product_name}\n`
+    message += `*Price:* ${finalPrice}${discountText}\n`
+    if (product.discount > 0) {
+      message += `*Original Price:* ${originalPrice}\n`
+    }
+    message += `*Category:* ${product.categoryName}\n`
+    if (product.description) {
+      message += `\n*Description:* ${product.description}\n`
+    }
+    message += `\nPlease let me know more about this product.`
+
+    try {
+      if (type === 'whatsapp') {
+        if (productImage) {
+          message += `\n\n*Product Image:* ${productImage}`
+        }
+
+        let cleanNumber = hardcodedNumber.replace(/[^\d+]/g, '')
+
+        if (cleanNumber.startsWith('+255')) {
+          cleanNumber = cleanNumber.substring(1)
+        } else if (cleanNumber.startsWith('255')) {
+        } else if (cleanNumber.startsWith('0')) {
+          cleanNumber = '255' + cleanNumber.substring(1)
+        } else {
+          cleanNumber = '255' + cleanNumber
+        }
+
+        const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`
+        window.open(whatsappUrl, '_blank')
+
+      } else if (type === 'call') {
+        const callUrl = `tel:${hardcodedNumber}`
+        window.location.href = callUrl
+      }
+    } catch (error) {
+      console.error('Error handling contact:', error)
+    }
+  }, [product, discountedPrice])
+
+  const handleClick = useCallback(() => {
+    if (onClick) {
+      onClick(product)
+    } else {
+      const slug = `${slugify(product.product_name)}_${product.id}`
+      const categorySlug = product.categoryName.toLowerCase().replace(/\s+/g, '-')
+      router.push(`/product/${categorySlug}/${slug}`)
+    }
+  }, [onClick, product, router])
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true)
+  }, [])
+
+  const handleImageError = useCallback(() => {
+    setImageError(true)
+    setImageLoaded(true)
+  }, [])
+
+  if (viewMode === 'list') {
+    return (
+      <div
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all duration-300 cursor-pointer flex gap-4 w-full"
+        onClick={handleClick}
+      >
+        {}
+        <div className="relative w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+          {!imageError ? (
+            <Image
+              src={product.product_images?.[0] || '/placeholder-image.jpg'}
+              alt={product.product_name}
+              fill
+              className={`object-cover transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              sizes="96px"
+              priority={priority}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+              No Image
+            </div>
+          )}
+
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+          )}
+        </div>
+
+        {}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
+            {product.product_name}
+          </h3>
+          <p className="text-xs text-gray-600 mb-2 truncate">{product.vendorName}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-blue-600">
+                {formatCurrency(discountedPrice)}
+              </span>
+              {product.discount > 0 && (
+                <span className="text-sm text-gray-500 line-through">
+                  {formatCurrency(product.price)}
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => handleContactVendor(e, 'whatsapp')}
+                className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                title="WhatsApp"
+                type="button"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => handleContactVendor(e, 'call')}
+                className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                title="Call"
+                type="button"
+              >
+                <Phone className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group w-full break-inside-avoid mb-4"
+      onClick={handleClick}
+    >
+      {}
+      <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
+        {!imageError ? (
+          <Image
+            src={product.product_images?.[0] || '/placeholder-image.jpg'}
+            alt={product.product_name}
+            fill
+            className={`object-cover group-hover:scale-105 transition-all duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            sizes={sizes}
+            priority={priority}
+            quality={75}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+            <div className="text-center p-4">
+              <div className="text-2xl mb-2">📦</div>
+              <div className="text-xs">No Image</div>
+            </div>
+          </div>
+        )}
+
+        {}
+        {!imageLoaded && !imageError && (
+          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+        )}
+
+        {}
+        {product.discount > 0 && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold z-10">
+            -{product.discount}%
+          </div>
+        )}
+
+        {}
+        {!product.isAvailable && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+            <span className="bg-red-500 text-white px-3 py-1 rounded-md text-sm font-semibold">
+              Out of Stock
+            </span>
+          </div>
+        )}
+      </div>
+
+      {}
+      <div className="p-3 sm:p-4 space-y-2">
+        {}
+        <h3 className="font-semibold text-gray-900 text-sm leading-tight h-10 overflow-hidden">
+          <span className="line-clamp-2">{product.product_name}</span>
+        </h3>
+
+        {}
+        <p className="text-xs text-gray-600 h-8 overflow-hidden">
+          <span className="line-clamp-2">{product.description}</span>
+        </p>
+
+        {}
+        <div className="space-y-1">
+          <p className="text-xs text-gray-600 truncate">{product.vendorName}</p>
+          <p className="text-xs text-blue-600 truncate">{product.categoryName}</p>
+        </div>
+
+        {}
+        <div className="h-12 flex flex-col justify-center">
+          <div className="flex items-center gap-2">
+            <span className="text-base sm:text-lg font-bold text-blue-600">
+              {formatCurrency(discountedPrice)}
+            </span>
+            {product.discount > 0 && (
+              <span className="text-xs sm:text-sm text-gray-500 line-through">
+                {formatCurrency(product.price)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {}
+        <div className="flex gap-2 h-8">
+          <button
+            onClick={(e) => handleContactVendor(e, 'whatsapp')}
+            className="flex-1 bg-green-500 text-white py-1 px-2 rounded-md hover:bg-green-600 transition-colors flex items-center justify-center text-xs font-medium"
+            type="button"
+          >
+            <MessageCircle className="h-3 w-3 mr-1" />
+            <span className="hidden xs:inline">WhatsApp</span>
+          </button>
+          <button
+            onClick={(e) => handleContactVendor(e, 'call')}
+            className="flex-1 bg-blue-500 text-white py-1 px-2 rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center text-xs font-medium"
+            type="button"
+          >
+            <Phone className="h-3 w-3 mr-1" />
+            <span className="hidden xs:inline">Call</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+OptimizedProductCard.displayName = 'OptimizedProductCard'
+
+export default OptimizedProductCard
+
+export const LazyLoadSection: React.FC<{
+  children: React.ReactNode
+  className?: string
+  threshold?: number
+}> = ({ children, className = '', threshold = 0.1 }) => {
+  const [isVisible, setIsVisible] = useState(false)
+  const [ref, setRef] = useState<HTMLDivElement | null>(null)
+
+  React.useEffect(() => {
+    if (!ref) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.unobserve(ref)
+        }
+      },
+      { threshold }
+    )
+
+    observer.observe(ref)
+
+    return () => observer.disconnect()
+  }, [ref, threshold])
+
+  return (
+    <div ref={setRef} className={className}>
+      {isVisible ? children : <div className="h-64 bg-gray-100 animate-pulse rounded-lg" />}
+    </div>
+  )
+}
+
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="text-center py-8">
+          <div className="text-red-500 mb-2">⚠️</div>
+          <p className="text-gray-600">Something went wrong. Please refresh the page.</p>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+================================================================================
+
+FILE 12: C:\src\Bhaba_com\bhaba-marketplace\src\components\ProductCard.tsx
+================================================================================
+import React from 'react'
+import { Phone, MessageCircle } from 'lucide-react'
+import { formatCurrency } from '@/utils/formatCurrency'
+import { useRouter } from 'next/router'
+import { slugify } from '@/utils/api'
+import DynamicAspectRatioImage from './DynamicAspectRatioImage'
+
+interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+interface ProductCardProps {
+  product: Product
+  onClick?: (product: Product) => void
+  viewMode?: 'grid' | 'list'
+}
+
+const ProductCard: React.FC<ProductCardProps> = React.memo(({ product, onClick, viewMode = 'grid' }) => {
+  const router = useRouter()
+  const discountedPrice = product.discount > 0
+    ? product.price * (1 - product.discount / 100)
+    : product.price
+
+    const handleContactVendor = (e: React.MouseEvent, type: 'whatsapp' | 'call') => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const hardcodedNumber = '0618205278';
+
+    const productImage = product.product_images?.[0] || ''
+    const originalPrice = formatCurrency(product.price)
+    const finalPrice = formatCurrency(discountedPrice)
+    const discountText = product.discount > 0 ? ` (${product.discount}% OFF)` : ''
+
+    let message = `Hi, I'm interested in your product:\n\n`
+    message += `*Product Name:* ${product.product_name}\n`
+    message += `*Price:* ${finalPrice}${discountText}\n`
+    if (product.discount > 0) {
+      message += `*Original Price:* ${originalPrice}\n`
+    }
+    message += `*Category:* ${product.categoryName}\n`
+    if (product.description) {
+      message += `\n*Description:* ${product.description}\n`
+    }
+    message += `\nPlease let me know more about this product.`
+
+    try {
+      if (type === 'whatsapp') {
+        if (productImage) {
+          message += `\n\n*Product Image:* ${productImage}`
+        }
+
+        let cleanNumber = hardcodedNumber.replace(/[^\d+]/g, '')
+
+        if (cleanNumber.startsWith('+255')) {
+          cleanNumber = cleanNumber.substring(1)
+        } else if (cleanNumber.startsWith('255')) {
+        } else if (cleanNumber.startsWith('0')) {
+          cleanNumber = '255' + cleanNumber.substring(1)
+        } else {
+          cleanNumber = '255' + cleanNumber
+        }
+
+        const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`
+        window.open(whatsappUrl, '_blank')
+
+      } else if (type === 'call') {
+        const callUrl = `tel:${hardcodedNumber}`
+        window.location.href = callUrl
+      }
+    } catch (error) {
+      console.error('Error handling contact:', error)
+      alert('Unable to open contact method. Please try again.')
+    }
+  }
+
+const handleClick = () => {
+  if (onClick) {
+    onClick(product)
+  } else {
+    const slug = `${slugify(product.product_name)}_${product.id}`
+    router.push(`/product/${product.categoryName.toLowerCase().replace(/\s+/g, '-')}/${slug}`)
+  }
+}
+
+  if (viewMode === 'list') {
+    return (
+      <div
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all duration-300 cursor-pointer flex gap-4 w-full"
+        onClick={handleClick}
+      >
+      {}
+        <div className="relative w-24 h-24 flex-shrink-0">
+          {}
+          <DynamicAspectRatioImage imageUrl={product.product_images?.[0] || '/placeholder-image.jpg'} />
+        </div>
+
+        {}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">{product.product_name}</h3>
+          <p className="text-xs text-gray-600 mb-2">{product.vendorName}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-blue-600">{formatCurrency(discountedPrice)}</span>
+              {product.discount > 0 && (
+                <span className="text-sm text-gray-500 line-through">{formatCurrency(product.price)}</span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => handleContactVendor(e, 'whatsapp')}
+                className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                title="WhatsApp"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => handleContactVendor(e, 'call')}
+                className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                title="Call"
+              >
+                <Phone className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="bg-gray-10 rounded-lg shadow-sm border border-green-600 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group w-full"
+      onClick={handleClick}
+    >
+      {}
+{}
+
+   <div className="w-full relative flex-shrink-0">
+      <DynamicAspectRatioImage imageUrl={product.product_images?.[0] || '/placeholder-image.jpg'} />
+
+        {}
+        {product.discount > 0 && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-semibold">
+            -{product.discount}%
+          </div>
+        )}
+
+        {}
+        {!product.isAvailable && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <span className="bg-red-500 text-white px-3 py-1 rounded-md text-sm font-semibold">
+              Out of Stock
+            </span>
+          </div>
+        )}
+      </div>
+
+      {}
+      <div className="p-3 sm:p-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{product.product_name}</h3>
+        <p className="text-xs text-gray-600 mb-2 line-clamp-2 sm:line-clamp-3">{product.description}</p>
+        <p className="text-xs text-gray-600 mb-2">{product.vendorName}</p>
+        <p className="text-xs text-blue-600 mb-3">{product.categoryName}</p>
+
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col">
+            <span className="text-base sm:text-lg font-bold text-blue-600">{formatCurrency(discountedPrice)}</span>
+            {product.discount > 0 && (
+              <span className="text-xs sm:text-sm text-gray-500 line-through">{formatCurrency(product.price)}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => handleContactVendor(e, 'whatsapp')}
+            className="flex-1 bg-green-500 text-white py-1 sm:py-2 px-2 sm:px-3 rounded-md hover:bg-green-600 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
+          >
+            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">WhatsApp</span>
+          </button>
+          <button
+            onClick={(e) => handleContactVendor(e, 'call')}
+            className="flex-1 bg-blue-500 text-white py-1 sm:py-2 px-2 sm:px-3 rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
+          >
+            <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Call</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+   );
+});
+ProductCard.displayName = 'ProductCard';
+
+export default ProductCard
+
+================================================================================
+
+FILE 13: C:\src\Bhaba_com\bhaba-marketplace\src\components\ProductGrid.tsx
+================================================================================
+(File contains no non-comment code)
+
+================================================================================
+
+FILE 14: C:\src\Bhaba_com\bhaba-marketplace\src\components\SEOHead.tsx
+================================================================================
+import Head from 'next/head'
+import { useRouter } from 'next/router'
+
+interface Product {
+  id: string
+  product_name: string
+  price: number
+  description: string
+  product_images: string[]
+  categoryName: string
+  vendorName: string
+  discount: number
+  isAvailable: boolean
+}
+
+interface SEOHeadProps {
+  title?: string
+  description?: string
+  keywords?: string[]
+  product?: Product
+  canonical?: string
+  noIndex?: boolean
+}
+
+const SEOHead: React.FC<SEOHeadProps> = ({
+  title = "Bhaba Marketplace - Shop Online in Tanzania",
+  description = "Discover the best products at affordable prices in Tanzania. Shop electronics, clothing, shoes and more from verified vendors.",
+  keywords = ["Tanzania shopping", "online marketplace", "electronics", "clothing", "wholesale"],
+  product,
+  canonical,
+  noIndex = false
+}) => {
+  const router = useRouter()
+  const baseUrl = "https://yourstore.com" // Replace with your actual domain
+  const currentUrl = canonical || `${baseUrl}${router.asPath}`
+
+  const productSEO = product ? {
+    title: `${product.product_name} - ${product.categoryName} | Bhaba Marketplace`,
+    description: `Buy ${product.product_name} at ${formatPrice(product.price)} in Tanzania. ${product.description}`,
+    keywords: [product.product_name, product.categoryName, product.vendorName, "Tanzania", "buy online"],
+    price: product.discount > 0 ?
+      product.price * (1 - product.discount / 100) :
+      product.price
+  } : null
+
+  const finalTitle = productSEO?.title || title
+  const finalDescription = productSEO?.description || description
+  const finalKeywords = productSEO?.keywords || keywords
+
+  const productStructuredData = product ? {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.product_name,
+    "description": product.description,
+    "image": product.product_images,
+    "category": product.categoryName,
+    "brand": {
+      "@type": "Brand",
+      "name": product.vendorName
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": productSEO?.price,
+      "priceCurrency": "TZS",
+      "availability": product.isAvailable ?
+        "https://schema.org/InStock" :
+        "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": product.vendorName
+      }
+    }
+  } : null
+
+  const organizationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Bhaba Marketplace",
+    "url": baseUrl,
+    "logo": `${baseUrl}/Bhaba_logo.png`,
+    "sameAs": [
+      "https://www.facebook.com/bhabamarketplace",
+      "https://www.instagram.com/bhabamarketplace"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+255-618-205-278",
+      "contactType": "customer service",
+      "availableLanguage": ["English", "Swahili"]
+    }
+  }
+
+  return (
+    <Head>
+      {}
+      <title>{finalTitle}</title>
+      <meta name="description" content={finalDescription} />
+      <meta name="keywords" content={finalKeywords.join(', ')} />
+      {noIndex && <meta name="robots" content="noindex, nofollow" />}
+
+      {}
+      <link rel="canonical" href={currentUrl} />
+
+      {}
+      <meta property="og:title" content={finalTitle} />
+      <meta property="og:description" content={finalDescription} />
+      <meta property="og:type" content={product ? "product" : "website"} />
+      <meta property="og:url" content={currentUrl} />
+      <meta property="og:site_name" content="Bhaba Marketplace" />
+      <meta property="og:locale" content="en_TZ" />
+      {product?.product_images?.[0] && (
+        <meta property="og:image" content={product.product_images[0]} />
+      )}
+
+      {}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={finalTitle} />
+      <meta name="twitter:description" content={finalDescription} />
+      {product?.product_images?.[0] && (
+        <meta name="twitter:image" content={product.product_images[0]} />
+      )}
+
+      {}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationStructuredData)
+        }}
+      />
+
+      {productStructuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(productStructuredData)
+          }}
+        />
+      )}
+
+      {}
+      <meta name="author" content="Bhaba Limited" />
+      <meta name="copyright" content="Bhaba Limited" />
+      <meta name="language" content="English" />
+      <meta name="revisit-after" content="7 days" />
+      <meta name="distribution" content="global" />
+      <meta name="rating" content="general" />
+
+      {}
+      <meta name="geo.region" content="TZ" />
+      <meta name="geo.country" content="Tanzania" />
+      <meta name="geo.placename" content="Dar es Salaam" />
+    </Head>
+  )
+}
+
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('en-TZ', {
+    style: 'currency',
+    currency: 'TZS',
+    minimumFractionDigits: 0,
+  }).format(price)
+}
+
+export default SEOHead
+
+================================================================================
+
+FILE 15: C:\src\Bhaba_com\bhaba-marketplace\src\pages\product\[category]\[slug].tsx
+================================================================================
+import { useRouter } from 'next/router'
+import React, { useState, useMemo, useEffect } from 'react'
+import Head from 'next/head'
+import { ChevronLeft, ChevronRight, Phone, MessageCircle, X, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import ProductCard from '../../../components/ProductCard'
+import HeaderBar from '../../../components/HeaderBar'
+import FilterModal from '../../../components/FilterModal'
+import { formatCurrency } from '../../../utils/formatCurrency'
+import type { NextPage } from 'next'
+import { slugify } from '@/utils/api'
+import { fetchWithRetry } from '../../../utils/api'
+import Link from 'next/link'
+
+interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+interface Vendor {
+  id: string
+  store_name: string
+  store_logo: string
+}
+
+interface ProductDetailProps {
+  products: Product[]
+  vendors: Vendor[]
+  categories: string[]
+}
+
+const ProductDetail: NextPage<ProductDetailProps> = ({ products: initialProducts, vendors, categories }) => {
+  const router = useRouter()
+  const { slug } = router.query
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [loading, setLoading] = useState(false)
+
+  const productId = typeof slug === 'string' ? slug.split('_').pop() : ''
+  const product = products.find(p => p.id.toString() === productId)
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState({
+    categories: [] as string[],
+    vendors: [] as string[],
+    priceRange: [0, 10000000] as [number, number],
+    inStock: false
+  })
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showFilters, setShowFilters] = useState(false)
+  const [sortOption, setSortOption] = useState('relevance')
+  const [expandedDescription, setExpandedDescription] = useState(false);
+
+  useEffect(() => {
+     const apiBase = "https://bhababackend.onrender.com";
+    if (!product && productId) {
+      const fetchProduct = async () => {
+        setLoading(true)
+        try {
+          const response = await fetch(`${apiBase}/products/${productId}`)
+          const data = await response.json()
+          setProducts(prev => [...prev, data])
+        } catch (error) {
+          console.error('Error fetching product:', error)
+        } finally {
+          setLoading(false)
+        }
+      }
+      fetchProduct()
+    }
+  }, [product, productId])
+
+  const filteredProducts = useMemo(() => {
+    let filtered = products.filter(p => p.id.toString() !== productId)
+
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase()
+      filtered = filtered.filter(p =>
+        (p.product_name || '').toLowerCase().includes(searchLower) ||
+        (p.description || '').toLowerCase().includes(searchLower) ||
+        (p.vendorName || '').toLowerCase().includes(searchLower)
+      )
+    }
+
+    if (filters.categories.length > 0) {
+      filtered = filtered.filter(p =>
+        filters.categories.includes(p.categoryName)
+      )
+    }
+
+    if (filters.vendors.length > 0) {
+      filtered = filtered.filter(p =>
+        filters.vendors.includes(p.vendorId)
+      )
+    }
+
+    filtered = filtered.filter(p => {
+      const price = p.discount > 0
+        ? p.price * (1 - p.discount / 100)
+        : p.price
+      return price >= filters.priceRange[0] && price <= filters.priceRange[1]
+    })
+
+    if (filters.inStock) {
+      filtered = filtered.filter(p => p.isAvailable)
+    }
+
+    switch(sortOption) {
+      case 'price-asc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceA - priceB
+        })
+        break
+      case 'price-desc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceB - priceA
+        })
+        break
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime())
+        break
+      case 'discount':
+        filtered.sort((a, b) => b.discount - a.discount)
+        break
+      default:
+        break
+    }
+
+    return filtered
+  }, [products, productId, searchQuery, filters, sortOption])
+
+  const relatedProducts = useMemo(() => {
+    if (!product) return []
+    return filteredProducts.filter(p =>
+      p.categoryId === product.categoryId
+    ).slice(0, 120)
+  }, [filteredProducts, product])
+
+  const otherProducts = useMemo(() => {
+    if (!product) return []
+    return filteredProducts.filter(p =>
+      p.categoryId !== product.categoryId
+    ).slice(0, 120)
+  }, [filteredProducts, product])
+
+  const handleBack = () => {
+    router.back()
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500 mx-auto mb-3" />
+          <p className="text-sm text-gray-600">Loading product details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <X className="h-10 w-10 text-red-500 mx-auto mb-3" />
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Product not found</h2>
+          <button
+            onClick={() => router.back()}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const discountedPrice = product.discount > 0
+    ? product.price * (1 - product.discount / 100)
+    : product.price
+
+  const handleContactVendor = (e: React.MouseEvent, type: 'whatsapp' | 'call') => {
+  e.preventDefault()
+  e.stopPropagation()
+
+  const hardcodedNumber = '0618205278';
+
+  const productImage = product.product_images?.[0] || ''
+  const originalPrice = formatCurrency(product.price)
+  const finalPrice = formatCurrency(discountedPrice)
+  const discountText = product.discount > 0 ? ` (${product.discount}% OFF)` : ''
+
+  let message = `Hi, I'm interested in your product:\n\n`
+  message += `*Product Name:* ${product.product_name}\n`
+  message += `*Price:* ${finalPrice}${discountText}\n`
+  if (product.discount > 0) {
+    message += `*Original Price:* ${originalPrice}\n`
+  }
+  message += `*Category:* ${product.categoryName}\n`
+  if (product.description) {
+    message += `\n*Description:* ${product.description}\n`
+  }
+  message += `\nPlease let me know more about this product.`
+
+  try {
+    if (type === 'whatsapp') {
+      if (productImage) {
+        message += `\n\n*Product Image:* ${productImage}`
+      }
+
+      let cleanNumber = hardcodedNumber.replace(/[^\d+]/g, '')
+
+      if (cleanNumber.startsWith('+255')) {
+        cleanNumber = cleanNumber.substring(1)
+      } else if (cleanNumber.startsWith('255')) {
+      } else if (cleanNumber.startsWith('0')) {
+        cleanNumber = '255' + cleanNumber.substring(1)
+      } else {
+        cleanNumber = '255' + cleanNumber
+      }
+
+      const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`
+      window.open(whatsappUrl, '_blank')
+
+    } else if (type === 'call') {
+      const callUrl = `tel:${hardcodedNumber}`
+      window.location.href = callUrl
+    }
+  } catch (error) {
+    console.error('Error handling contact:', error)
+    alert('Unable to open contact method. Please try again.')
+  }
+}
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === product.product_images.length - 1 ? 0 : prev + 1
+    )
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? product.product_images.length - 1 : prev - 1
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>{product.product_name} | Bhaba Marketplace</title>
+        <meta name="description" content={product.description || `Buy ${product.product_name} at ${formatCurrency(discountedPrice)} in Tanzania`} />
+        <meta name="keywords" content={`${product.product_name}, ${product.categoryName}, Tanzania, buy online`} />
+        <meta property="og:title" content={`${product.product_name} | Bhaba Marketplace`} />
+        <meta property="og:description" content={product.description || `Buy ${product.product_name} at ${formatCurrency(discountedPrice)}`} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={`https://yourstore.com/product/${slug}`} />
+        {product.product_images.length > 0 && (
+          <meta property="og:image" content={product.product_images[0]} />
+        )}
+      </Head>
+
+      <HeaderBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setShowFilters={setShowFilters}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+        showBackButton={true}
+        onBack={handleBack}
+      />
+
+      {}
+      {}
+
+       <div className="p-4 sm:p-6 w-full mx-auto">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 mb-8 w-full">
+           {}
+           <div className="space-y-3 sm:space-y-4 w-full">
+             <div className="relative w-full aspect-square">
+               <Image
+                 src={product.product_images?.[currentImageIndex] || '/category-images/placeholder-image.jpg'}
+                 alt={product.product_name}
+                 fill
+                 className="w-full h-full object-contain rounded-lg bg-white"
+                 priority={true}
+                 quality={90}
+               />
+
+               {product.product_images && product.product_images.length > 1 && (
+                 <>
+                   <button
+                     onClick={prevImage}
+                     className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                   >
+                     <ChevronLeft className="h-5 w-5" />
+                   </button>
+                   <button
+                     onClick={nextImage}
+                     className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all"
+                   >
+                     <ChevronRight className="h-5 w-5" />
+                   </button>
+                 </>
+               )}
+             </div>
+
+             {product.product_images && product.product_images.length > 1 && (
+               <div className="flex gap-2 overflow-x-auto pb-2">
+                 {product.product_images.map((image, index) => (
+                   <button
+                     key={index}
+                     onClick={() => setCurrentImageIndex(index)}
+                     className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 ${
+                       index === currentImageIndex ? 'border-blue-500' : 'border-gray-200'
+                     }`}
+                   >
+
+       <Image
+        src={image || '/category-images/placeholder-image.jpeg'}
+         alt={product.product_name}
+         width={800}
+         height={800}
+         className="w-full h-full object-contain rounded-lg bg-white"
+         priority={true}
+         quality={75}
+         placeholder="blur"
+         blurDataURL="/category-images/placeholder-image.jpeg"
+         onError={(e) => {
+           (e.target as HTMLImageElement).src = '/category-images/placeholder-image.jpeg';
+         }}
+       />
+
+                   </button>
+                 ))}
+               </div>
+             )}
+           </div>
+
+           {}
+           <div className="space-y-4 sm:space-y-6 w-full">
+             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+               {product.product_name}
+             </h1>
+
+             <div>
+               <div className="flex flex-wrap items-center gap-2 mb-2">
+                 <span className="text-xs sm:text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                   {product.categoryName}
+                 </span>
+                 {!product.isAvailable && (
+                   <span className="text-xs sm:text-sm text-red-600 bg-red-50 px-2 py-1 rounded-md">
+                     Out of Stock
+                   </span>
+                 )}
+               </div>
+
+               <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+                 <div>
+                   <span className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">
+                     {formatCurrency(discountedPrice)}
+                   </span>
+                   {product.discount > 0 && (
+                     <span className="text-sm sm:text-lg text-gray-500 line-through ml-2">
+                       {formatCurrency(product.price)}
+                     </span>
+                   )}
+                 </div>
+                 {product.discount > 0 && (
+                   <span className="bg-red-500 text-white px-2 py-1 rounded-md text-xs sm:text-sm font-semibold">
+                     -{product.discount}% OFF
+                   </span>
+                 )}
+               </div>
+             </div>
+
+             {}
+
+             {}
+<div className="space-y-4">
+  <div>
+    <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">Description</h3>
+    <div className="relative">
+      <p
+        className={`text-gray-700 text-sm sm:text-base leading-relaxed whitespace-pre-line ${
+          !expandedDescription && product.description && product.description.length > 200
+            ? 'line-clamp-4'
+            : ''
+        }`}
+      >
+        {product.description || 'No description available'}
+      </p>
+      {product.description && product.description.length > 200 && (
+        <button
+          onClick={() => setExpandedDescription(!expandedDescription)}
+          className="text-blue-500 hover:text-blue-700 text-sm font-medium mt-1 focus:outline-none"
+        >
+          {expandedDescription ? 'Show Less' : 'Read More'}
+        </button>
+      )}
+    </div>
+  </div>
+
+  {product.details && (
+    <div>
+      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">Details</h3>
+      <p className="text-gray-700 text-sm sm:text-base">{product.details}</p>
+    </div>
+  )}
+
+  <div>
+    <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">Vendor</h3>
+    <p className="text-gray-700 text-sm sm:text-base">{product.vendorName}</p>
+    <p className="text-gray-600 text-sm sm:text-base">
+      Contact: {"0618205278"}
+    </p>
+  </div>
+
+  {product.moq > 0 && (
+    <div>
+      <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2">
+        Minimum Order Quantity
+      </h3>
+      <p className="text-gray-700 text-sm sm:text-base">
+        {product.moq} units
+      </p>
+    </div>
+  )}
+</div>
+
+             {}
+             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-2 sm:pt-4">
+               <button
+                 onClick={(e) => handleContactVendor(e, 'whatsapp')}
+                 className="flex-1 bg-green-500 text-white py-3 px-6 rounded-md hover:bg-green-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base font-semibold"
+                 type="button"
+               >
+                 <MessageCircle className="h-5 w-5" />
+                 WhatsApp
+               </button>
+               <button
+                 onClick={(e) => handleContactVendor(e, 'call')}
+                 className="flex-1 bg-blue-500 text-white py-3 px-6 rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base font-semibold"
+                 type="button"
+               >
+                 <Phone className="h-5 w-5" />
+                 Call
+               </button>
+             </div>
+           </div>
+         </div>
+
+         {}
+         {relatedProducts.length > 0 && (
+           <div className="mt-8 border-t pt-8 w-full">
+             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
+               Related Products
+             </h3>
+            {}
+             <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
+               {relatedProducts.map((relatedProduct) => (
+                 <ProductCard
+                   key={relatedProduct.id}
+                   product={relatedProduct}
+                   viewMode="grid"
+                 />
+               ))}
+             </div>
+           </div>
+         )}
+
+         {}
+         {otherProducts.length > 0 && (
+           <div className="mt-8 border-t pt-8 w-full">
+             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
+               You Might Also Like
+             </h3>
+             {}
+             <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
+               {otherProducts.map((otherProduct) => (
+               <ProductCard
+                   key={otherProduct.id}
+                   product={otherProduct}
+                   viewMode="grid"
+                 />
+               ))}
+             </div>
+           </div>
+         )}
+
+         {}
+      <div className="mt-12 border-t pt-8">
+        <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
+          <Link href="/privacy-policy" className="hover:text-blue-600 transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/terms-of-service" className="hover:text-blue-600 transition-colors">
+            Terms of Service
+          </Link>
+          <a
+            href="https://bhabalimited.com/privacy_policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-600 transition-colors"
+          >
+            Full Privacy Policy
+          </a>
+          <a
+            href="https://bhabalimited.com/terms_of_service"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-600 transition-colors"
+          >
+            Full Terms of Service
+          </a>
+        </div>
+      </div>
+    </div>
+
+             <FilterModal
+               isOpen={showFilters}
+               onClose={() => setShowFilters(false)}
+               categories={categories.map(name => ({ id: name, category_name: name }))}
+               vendors={vendors}
+               filters={filters}
+               onFiltersChange={setFilters}
+             />
+
+    </div>
+  )
+}
+
+export async function getStaticPaths() {
+ const apiBase = "https://bhababackend.onrender.com";
+
+  try {
+    const products = await fetchWithRetry<Product[]>(`${apiBase}/products`)
+
+    const paths = products
+  .filter(product => product.categoryName && product.product_name && product.id)
+  .map((product) => ({
+    params: {
+      category: product.categoryName.toLowerCase().replace(/\s+/g, '-'),
+      slug: `${slugify(product.product_name)}_${product.id}`
+    }
+  }))
+
+    return { paths, fallback: 'blocking' }
+  } catch (error) {
+    console.error('Error generating paths:', error)
+    return { paths: [], fallback: 'blocking' }
+  }
+}
+
+export async function getStaticProps({ params }: { params: { category: string, slug: string } }) {
+  const apiBase = "https://bhababackend.onrender.com";
+
+   try {
+    const productId = params.slug.split('_').pop() || ''
+
+    const [, featuredProductsRes, vendorsRes, categoriesRes] = await Promise.all([
+      fetch(`${apiBase}/products/${productId}`),
+      fetch(`${apiBase}/search?limit=10`),
+      fetch(`${apiBase}/vendors`),
+      fetch(`${apiBase}/categories`)
+    ])
+
+    const parseResponse = async (res: Response) => {
+      const text = await res.text()
+      try {
+        return text ? JSON.parse(text) : []
+      } catch (e) {
+        console.error('Failed to parse response:', text, e)
+        return []
+      }
+    }
+
+    return {
+      props: {
+        products: await parseResponse(featuredProductsRes),
+        vendors: await parseResponse(vendorsRes),
+        categories: await parseResponse(categoriesRes),
+      },
+      revalidate: 3600
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return {
+      props: {
+        products: [],
+        vendors: [],
+        categories: []
+      }
+    }
+  }
+}
+
+export default ProductDetail
+
+================================================================================
+
+FILE 16: C:\src\Bhaba_com\bhaba-marketplace\src\pages\category\[category].tsx
+================================================================================
+import { useRouter } from 'next/router'
+import React, { useState, useEffect, useMemo } from 'react'
+import Head from 'next/head'
+import { Loader2 } from 'lucide-react'
+import ProductCard from '../../components/ProductCard'
+import HeaderBar from '../../components/HeaderBar'
+import { fetchWithRetry, SearchResult } from '../../utils/api'
+import type { NextPage } from 'next'
+import { Product } from '../../utils/api'
+import { slugify } from '../../utils/api'
+
+const API_BASE = "https://bhababackend.onrender.com"
+
+interface CategoryPageProps {
+  initialProducts: Product[]
+}
+
+const CategoryPage: NextPage<CategoryPageProps> = ({ initialProducts = [] }) => {
+  const router = useRouter()
+  const { category } = router.query
+  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [loading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [sortOption, setSortOption] = useState('relevance')
+  const [, setShowFilters] = useState(false)
+
+  useEffect(() => {
+    if (category && (!initialProducts || initialProducts.length === 0)) {
+      const fetchCategoryProducts = async () => {
+        setLoading(true);
+        try {
+          const categoryName = typeof category === 'string'
+            ? category.replace(/-/g, ' ')
+            : '';
+
+          const response = await fetchWithRetry<SearchResult>(
+            `${API_BASE}/search?category=${encodeURIComponent(categoryName)}`
+          );
+
+          setProducts(Array.isArray(response?.hits) ? response.hits : []);
+        } catch (error) {
+          console.error('Error fetching category products:', error);
+          setProducts([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchCategoryProducts();
+    }
+  }, [category, initialProducts]);
+
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return []
+    if (!searchQuery) return products
+
+    return products.filter(product =>
+      (product?.product_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product?.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product?.vendorName || '').toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [products, searchQuery])
+
+  const sortedProducts = useMemo(() => {
+    if (!Array.isArray(filteredProducts)) return []
+
+    const productsToSort = [...filteredProducts]
+
+    switch(sortOption) {
+      case 'price-asc':
+        return productsToSort.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceA - priceB
+        })
+      case 'price-desc':
+        return productsToSort.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceB - priceA
+        })
+      case 'newest':
+        return productsToSort.sort((a, b) =>
+          new Date(b.added_at).getTime() - new Date(a.added_at).getTime()
+        )
+      case 'discount':
+        return productsToSort.sort((a, b) => (b.discount || 0) - (a.discount || 0))
+      default:
+        return productsToSort
+    }
+  }, [filteredProducts, sortOption])
+
+  const handleProductClick = (product: Product) => {
+    const slug = `${slugify(product.product_name)}_${product.id}`
+    const categorySlug = (product.categoryName || 'uncategorized').toLowerCase().replace(/\s+/g, '-')
+    router.push(`/product/${categorySlug}/${slug}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500 mx-auto mb-3" />
+          <p className="text-sm text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Head>
+        <title>{category} | Bhaba Marketplace</title>
+        <meta name="description" content={`Browse ${category} products on Bhaba Marketplace`} />
+      </Head>
+
+      <HeaderBar
+        showBackButton={true}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setShowFilters={setShowFilters}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+      />
+
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6 capitalize">
+          {category}
+        </h1>
+
+        {sortedProducts.length > 0 ? (
+          <div className={
+            viewMode === 'grid'
+              ? "columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4"
+              : "space-y-4"
+          }>
+            {sortedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                viewMode={viewMode}
+                onClick={handleProductClick}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-600">
+              {searchQuery
+                ? `No products found matching "${searchQuery}"`
+                : 'No products found in this category'
+              }
+            </p>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
+
+export async function getStaticProps({ params }: { params: { category: string } }) {
+  try {
+    const categoryName = params.category.replace(/-/g, ' ');
+
+    const response = await fetchWithRetry<SearchResult>(
+      `${API_BASE}/search?category=${encodeURIComponent(categoryName)}`
+    );
+
+    return {
+      props: {
+        initialProducts: Array.isArray(response?.hits) ? response.hits : []
+      },
+      revalidate: 3600
+    };
+  } catch (error) {
+    console.error('Error fetching category products:', error);
+    return {
+      props: {
+        initialProducts: []
+      }
+    };
+  }
+}
+
+export async function getStaticPaths() {
+  try {
+    const categories = await fetchWithRetry<string[]>(
+      `${API_BASE}/categories`
+    )
+
+    const paths = Array.isArray(categories) ? categories.map((category) => ({
+      params: { category: category.toLowerCase().replace(/\s+/g, '-') }
+    })) : []
+
+    return {
+      paths,
+      fallback: 'blocking'
+    }
+  } catch (error) {
+    console.error('Error generating category paths:', error)
+    return {
+      paths: [],
+      fallback: 'blocking'
+    }
+  }
+}
+
+export default CategoryPage
+
+================================================================================
+
+FILE 17: C:\src\Bhaba_com\bhaba-marketplace\src\pages\index.tsx
+================================================================================
+import React, { useState, useMemo, useEffect, Suspense } from 'react'
+import { useRouter } from 'next/router'
+import Head from 'next/head'
+import { AlertCircle, X, ChevronRight, TrendingUp, Star, Users } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import Image from 'next/image'
+import { slugify } from '../utils/api'
+
+const ProductCard = dynamic(() => import('../components/ProductCard'), {
+  loading: () => <ProductCardSkeleton />
+})
+const FilterModal = dynamic(() => import('../components/FilterModal'))
+const AppDownloadBanner = dynamic(() => import('../components/AppDownloadBanner'))
+
+import HeaderBar from '../components/HeaderBar'
+import BottomNavigation from '../components/BottomNavigation'
+import type { NextPage } from 'next'
+
+interface Product {
+  id: string
+  productId: string
+  product_name: string
+  price: number
+  description: string
+  discount: number
+  details: string
+  tier_pricing: string[]
+  product_images: string[]
+  mobile_number: string
+  isAvailable: boolean
+  moq: number
+  added_at: string
+  vendorId: string
+  vendorName: string
+  categoryId: string
+  categoryName: string
+}
+
+interface Vendor {
+  id: string
+  store_name: string
+  store_logo: string
+}
+
+interface HomeProps {
+  products: Product[]
+  vendors: Vendor[]
+  categories: string[]
+}
+
+const ProductCardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse">
+    <div className="w-full aspect-square bg-gray-200" />
+    <div className="p-3 space-y-3">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 rounded w-1/2" />
+      <div className="h-6 bg-gray-200 rounded w-1/3" />
+      <div className="flex gap-2">
+        <div className="h-8 bg-gray-200 rounded flex-1" />
+        <div className="h-8 bg-gray-200 rounded flex-1" />
+      </div>
+    </div>
+  </div>
+)
+
+const CategorySkeleton = () => (
+  <div className="flex flex-col items-center justify-center w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white border border-gray-200 animate-pulse">
+    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 rounded-md mb-1" />
+    <div className="h-3 bg-gray-200 rounded w-12" />
+  </div>
+)
+
+const HeroSection = () => (
+  <div className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white overflow-hidden">
+    {}
+    <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 bg-repeat" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      }} />
+    </div>
+
+    <div className="relative max-w-7xl mx-auto px-4 py-8 sm:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              <span>Tanzania&apos;s #1 Marketplace</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+              Discover Amazing
+              <span className="block bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                Products
+              </span>
+            </h1>
+
+            <p className="text-lg sm:text-xl text-blue-100 max-w-lg">
+              Shop from thousands of verified vendors across Tanzania. Quality products, competitive prices, fast delivery.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 py-4">
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold">10K+</div>
+              <div className="text-sm text-blue-200">Products</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold">500+</div>
+              <div className="text-sm text-blue-200">Vendors</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold">50K+</div>
+              <div className="text-sm text-blue-200">Happy Customers</div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center">
+              Start Shopping
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </button>
+            <button className="border-2 border-white/30 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors">
+              Download App
+            </button>
+          </div>
+        </div>
+
+        <div className="relative hidden lg:block">
+          <div className="relative w-full h-96">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 rounded-2xl" />
+            <div className="grid grid-cols-2 gap-4 h-full">
+              <div className="space-y-4">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 h-32">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center">
+                      <Star className="h-4 w-4 text-yellow-800" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">Quality Products</div>
+                      <div className="text-xs text-blue-200">Verified sellers</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 h-40">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-400 rounded-lg flex items-center justify-center">
+                      <Users className="h-4 w-4 text-green-800" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">Trusted Community</div>
+                      <div className="text-xs text-blue-200">50K+ customers</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4 pt-8">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 h-40">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-purple-400 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="h-4 w-4 text-purple-800" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">Best Prices</div>
+                      <div className="text-xs text-blue-200">Competitive rates</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 h-32">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-orange-400 rounded-lg flex items-center justify-center">
+                      <ChevronRight className="h-4 w-4 text-orange-800" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">Fast Delivery</div>
+                      <div className="text-xs text-blue-200">Quick shipping</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)
+
+const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [] }) => {
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState({
+    categories: [] as string[],
+    vendors: [] as string[],
+    priceRange: [0, 10000000] as [number, number],
+    inStock: false
+  })
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [showFilters, setShowFilters] = useState(false)
+  const [sortOption, setSortOption] = useState('relevance')
+  const [showWholesale, setShowWholesale] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const categoryImages = {
+    Electronics: '/category-images/electronics.jpeg',
+    Shoes: '/category-images/shoes.webp',
+    Clothing: '/category-images/clothing.webp',
+    Automotive: '/category-images/automotive.webp',
+    Bags: '/category-images/bags.webp',
+    Cars: '/category-images/cars.jpg',
+    "Computer & Accessories": '/category-images/computer-accessories.png',
+    Furniture: '/category-images/furniture.jpeg',
+    "Grains & Pulses": '/category-images/grains_pulses.jpeg',
+    "Health & Beauty": '/category-images/health_beauty.jpeg',
+    "Home Appliances": '/category-images/home_appliances.jpeg',
+    "Home Textile": '/category-images/home_textile.jpeg',
+    "Jewelry & Watches": '/category-images/jewelry_watches.jpeg',
+    Phone: '/category-images/phone.jpg',
+    Smokeables: '/category-images/smokeables.webp',
+    "Sports & Outdoors": '/category-images/sports_outdoors.jpeg',
+    "Office Supplies": '/category-images/office_supplies.jpeg',
+  }
+
+  const wholesaleVendors = ['dPpBnTL3CDN879g7X1cRVoRG5wn2']
+
+  const filteredProducts = useMemo(() => {
+    let filtered = products
+
+    if (searchQuery) {
+      filtered = filtered.filter(product => {
+        const searchLower = searchQuery.toLowerCase()
+        return (
+  (product.product_name || '').toLowerCase().includes(searchLower) ||
+        (product.description || '').toLowerCase().includes(searchLower) ||
+        (product.vendorName || '').toLowerCase().includes(searchLower) ||
+        (product.categoryName || '').toLowerCase().includes(searchLower)
+        )
+      })
+    }
+
+    if (filters.categories.length > 0) {
+      filtered = filtered.filter(product =>
+        filters.categories.includes(product.categoryName)
+      )
+    }
+
+    if (filters.vendors.length > 0) {
+      filtered = filtered.filter(product =>
+        filters.vendors.includes(product.vendorId)
+      )
+    }
+
+    filtered = filtered.filter(product => {
+      const price = product.discount > 0
+        ? product.price * (1 - product.discount / 100)
+        : product.price
+      return price >= filters.priceRange[0] && price <= filters.priceRange[1]
+    })
+
+    if (filters.inStock) {
+      filtered = filtered.filter(product => product.isAvailable)
+    }
+
+    switch(sortOption) {
+      case 'price-asc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceA - priceB
+        })
+        break
+      case 'price-desc':
+        filtered.sort((a, b) => {
+          const priceA = a.discount > 0 ? a.price * (1 - a.discount / 100) : a.price
+          const priceB = b.discount > 0 ? b.price * (1 - b.discount / 100) : b.price
+          return priceB - priceA
+        })
+        break
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime())
+        break
+      case 'discount':
+        filtered.sort((a, b) => b.discount - a.discount)
+        break
+      default:
+        break
+    }
+
+    return filtered
+  }, [products, searchQuery, filters, sortOption])
+
+  const handleProductClick = (product: Product) => {
+    const slug = `${slugify(product.product_name)}_${product.id}`
+    const categorySlug = product.categoryName.toLowerCase().replace(/\s+/g, '-')
+    router.push(`/product/${categorySlug}/${slug}`)
+  }
+
+  const handleWholesaleClick = () => {
+    setShowWholesale(true)
+    setFilters({
+      ...filters,
+      vendors: wholesaleVendors
+    })
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 w-full overflow-x-hidden">
+      <Head>
+        <title>Bhaba Marketplace - Shop Online in Tanzania</title>
+        <meta name="description" content="Discover the best products at affordable prices in Tanzania. Shop electronics, clothing, shoes and more from verified vendors." />
+        <meta name="keywords" content="Tanzania ecommerce, online shopping, Bhaba Marketplace, electronics, clothing, shoes" />
+        <meta property="og:title" content="Bhaba Marketplace - Shop Online in Tanzania" />
+        <meta property="og:description" content="Discover the best products at affordable prices in Tanzania." />
+        <meta property="og:type" content="website" />
+        <link rel="preload" href="/Bhaba_logo.png" as="image" />
+        <link rel="dns-prefetch" href="https://ik.imagekit.io" />
+      </Head>
+
+      <HeaderBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        setShowFilters={setShowFilters}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+      />
+
+      {}
+      <HeroSection />
+
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8">
+        {showWholesale && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-blue-900">
+                Wholesale Products
+              </h2>
+              <p className="text-sm text-blue-700">Special bulk pricing available</p>
+            </div>
+            <button
+              onClick={() => {
+                setShowWholesale(false)
+                setFilters({ ...filters, vendors: [] })
+              }}
+              className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+            >
+              Show All Products
+            </button>
+          </div>
+        )}
+
+        {}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+              {searchQuery ? `Search results for "${searchQuery}"` : 'Featured Products'}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} available
+            </p>
+          </div>
+
+          {(filters.categories.length > 0 || filters.vendors.length > 0 || filters.inStock) && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-gray-600">Filters:</span>
+              {filters.categories.map(categoryName => (
+                <span key={categoryName} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  {categoryName}
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        ...filters,
+                        categories: filters.categories.filter(name => name !== categoryName)
+                      })
+                    }}
+                    className="hover:text-blue-600 ml-1"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Shop by Category</h3>
+          <div className="overflow-x-auto">
+            <div className="flex gap-4 pb-4 min-w-max">
+              {isLoading ? (
+                Array.from({ length: 8 }, (_, i) => <CategorySkeleton key={i} />)
+              ) : (
+                categories.map((categoryName) => (
+                  <button
+                    key={categoryName}
+                    onClick={() => {
+                      router.push(`/category/${categoryName.toLowerCase().replace(/\s+/g, '-')}`)
+                    }}
+                    className="flex flex-col items-center justify-center w-20 sm:w-24 h-20 sm:h-24 rounded-xl bg-white border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 flex-shrink-0 group"
+                  >
+                    {categoryImages[categoryName as keyof typeof categoryImages] && (
+                      <div className="relative w-10 h-10 sm:w-12 sm:h-12 mb-2 overflow-hidden rounded-lg group-hover:scale-110 transition-transform duration-200">
+                        <Image
+                          src={categoryImages[categoryName as keyof typeof categoryImages]}
+                          alt={categoryName}
+                          fill
+                          className="object-cover"
+                          loading="lazy"
+                          sizes="48px"
+                        />
+                      </div>
+                    )}
+                    <span className="text-xs font-medium text-gray-700 text-center px-1 leading-tight">
+                      {categoryName.split(' ')[0]}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {}
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {Array.from({ length: 12 }, (_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+            <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
+            <button
+              onClick={() => {
+                setSearchQuery('')
+                setFilters({
+                  categories: [],
+                  vendors: [],
+                  priceRange: [0, 10000000],
+                  inStock: false
+                })
+              }}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
+        ) : (
+          <Suspense fallback={<div>Loading products...</div>}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onClick={handleProductClick}
+                  viewMode="grid"
+                />
+              ))}
+            </div>
+          </Suspense>
+        )}
+      </main>
+
+      <BottomNavigation onWholesaleClick={handleWholesaleClick} />
+      <AppDownloadBanner position="floating" />
+
+      <Suspense fallback={null}>
+        <FilterModal
+          isOpen={showFilters}
+          onClose={() => setShowFilters(false)}
+          categories={categories.map(name => ({ id: name, category_name: name }))}
+          vendors={vendors}
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
+      </Suspense>
+    </div>
+  )
+}
+
+export async function getStaticProps() {
+  const apiBase = "https://bhababackend.onrender.com"
+
+  try {
+    const [featuredProductsRes, vendorsRes, categoriesRes] = await Promise.all([
+      fetch(`${apiBase}/search?limit=100`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      }),
+      fetch(`${apiBase}/vendors`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      }),
+      fetch(`${apiBase}/categories`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+    ])
+
+    const parseResponse = async (res: Response) => {
+      if (!res.ok) return []
+      const text = await res.text()
+      try {
+        return text ? JSON.parse(text) : []
+      } catch (e) {
+        console.error('Failed to parse response:', e)
+        return []
+      }
+    }
+
+    const [products, vendors, categories] = await Promise.all([
+      parseResponse(featuredProductsRes),
+      parseResponse(vendorsRes),
+      parseResponse(categoriesRes)
+    ])
+
+    return {
+      props: {
+        products: Array.isArray(products?.hits) ? products.hits : Array.isArray(products) ? products : [],
+        vendors: Array.isArray(vendors) ? vendors : [],
+        categories: Array.isArray(categories) ? categories : [],
+      },
+      revalidate: 1800,
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return {
+      props: {
+        products: [],
+        vendors: [],
+        categories: []
+      },
+      revalidate: 300,
+    }
+  }
+}
+
+export default Home
+
+================================================================================
+
