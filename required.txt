@@ -1,0 +1,38 @@
+public/
+├── Bhaba_logo.png                 # Your main logo (upload this)
+├── critical.css                   # Critical CSS file (create this)
+├── icons/                         # PWA icons directory
+│   ├── icon-72x72.png
+│   ├── icon-96x96.png
+│   ├── icon-128x128.png
+│   ├── icon-144x144.png
+│   ├── icon-152x152.png
+│   ├── icon-192x192.png
+│   ├── icon-384x384.png
+│   ├── icon-512x512.png
+│   ├── apple-touch-icon.png
+│   ├── electronics.png
+│   └── clothing.png
+├── category-images/                # Category images
+│   ├── electronics.jpeg
+│   ├── clothing.webp
+│   ├── shoes.webp
+│   ├── automotive.webp
+│   ├── bags.webp
+│   ├── cars.jpg
+│   ├── computer-accessories.png
+│   ├── furniture.jpeg
+│   ├── grains_pulses.jpeg
+│   ├── health_beauty.jpeg
+│   ├── home_appliances.jpeg
+│   ├── home_textile.jpeg
+│   ├── jewelry_watches.jpeg
+│   ├── phone.jpg
+│   ├── smokeables.webp
+│   ├── sports_outdoors.jpeg
+│   ├── office_supplies.jpeg
+│   └── placeholder-image.jpg       # Fallback image
+├── screenshots/                    # PWA screenshots
+│   ├── mobile1.png
+│   └── desktop1.png
+└── sitemap.xml                     # SEO sitemap
