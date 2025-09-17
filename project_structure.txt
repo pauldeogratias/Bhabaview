@@ -1,0 +1,16 @@
+bhaba-marketplace/
+  api/                   # Your Express API (kept separate)
+  public/                # Static files (sitemap.xml will go here)
+  scripts/               # NEW: Add this directory for build scripts
+    generate-sitemap.ts  # Sitemap generator script
+  src/
+    components/          # All your existing components
+    pages/
+      _app.tsx           # Main app wrapper
+      index.tsx          # Home page
+      product/
+        [slug].tsx       # Dynamic product page
+    styles/
+      globals.css        # Global styles
+    types/               # TypeScript types
+    utils/               # Utility functions
