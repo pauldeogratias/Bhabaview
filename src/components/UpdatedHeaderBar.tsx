@@ -48,11 +48,11 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const sortOptions = [
-    { value: 'relevance', label: 'Relevance', icon: '⭐' },
-    { value: 'price-asc', label: 'Price: Low to High', icon: '📈' },
-    { value: 'price-desc', label: 'Price: High to Low', icon: '📉' },
-    { value: 'newest', label: 'Newest', icon: '🆕' },
-    { value: 'discount', label: 'Best Discount', icon: '🏷️' },
+    { value: 'relevance', label: 'Relevance', icon: '' },
+    { value: 'price-asc', label: 'Price: Low to High', icon: '' },
+    { value: 'price-desc', label: 'Price: High to Low', icon: '' },
+    { value: 'newest', label: 'Newest', icon: '' },
+    { value: 'discount', label: 'Best Discount', icon: '' },
   ];
 
   const handleSortChange = useCallback((option: string) => {
@@ -167,8 +167,8 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
             <nav className="p-6">
               <div className="space-y-2">
                 {[
-                  { href: '/privacy-policy-full', label: 'Full Privacy Policy', icon: '🔒' },
-                  { href: '/terms-of-service-full', label: 'Full Terms of Service', icon: '📄' },
+                  { href: '/privacy-policy-full', label: 'Privacy Policy', icon: '🔒' },
+                  { href: '/terms-of-service-full', label: 'Terms of Service', icon: '📄' },
                   { href: '/account', label: 'Account', icon: '👤' },
                 ].map((item) => (
                   <Link
@@ -485,4 +485,5 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
 
 
 UpdatedHeaderBar.displayName = 'UpdatedHeaderBar';
+
 export default UpdatedHeaderBar
