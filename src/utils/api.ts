@@ -1,6 +1,6 @@
 // src/utils/api.ts
 // const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
- const API_BASE = "https://bhababackend.onrender.com";
+ const API_BASE = "https://bhabaapi.onrender.com";
 //   const isBrowser = typeof window !== 'undefined';
 // const isLocalhost = isBrowser && window.location.hostname === 'localhost';
 
@@ -106,51 +106,15 @@ export const fetchProductById = async (id: string): Promise<Product> => {
 /**
  * Fetches all products with pagination
  */
-// export const fetchAllProducts = async (
-//   // limit = 20,
-//   limit = 10000,
-//   offset = 0
-// ): Promise<PaginatedResponse<Product>> => {
-//   const response = await fetch(
-//     `${API_BASE}/products?limit=${limit}&offset=${offset}`
-//   );
-//   return handleResponse<PaginatedResponse<Product>>(response);
-// };
-
-
 export const fetchAllProducts = async (
+  // limit = 20,
   limit = 10000,
   offset = 0
 ): Promise<PaginatedResponse<Product>> => {
   const response = await fetch(
     `${API_BASE}/products?limit=${limit}&offset=${offset}`
   );
-  const data = await handleResponse<any>(response);
-  
-  // Handle both response formats
-  if (data.hits !== undefined) {
-    // Search endpoint format
-    return {
-      data: data.hits || [],
-      total: data.totalHits || 0,
-      ...data
-    };
-  } else if (data.products !== undefined) {
-    // Products endpoint format
-    return {
-      data: data.products || [],
-      total: data.total || 0,
-      ...data
-    };
-  } else {
-    // Fallback for unexpected formats
-    console.warn('Unexpected API response format:', data);
-    return {
-      data: [],
-      total: 0,
-      ...data
-    };
-  }
+  return handleResponse<PaginatedResponse<Product>>(response);
 };
 
 /**
@@ -218,28 +182,12 @@ export const fetchAllCategories = async (): Promise<Category[]> => {
 /**
  * Searches products with advanced filters
  */
-// export const searchProducts = async (
-//   params: SearchParams
-// ): Promise<SearchResult> => {
-//   const queryParams = new URLSearchParams();
-
-//   // Add all defined parameters to the query
-//   Object.entries(params).forEach(([key, value]) => {
-//     if (value !== undefined) {
-//       queryParams.append(key, String(value));
-//     }
-//   });
-
-//   const response = await fetch(`${API_BASE}/search?${queryParams.toString()}`);
-//   return handleResponse<SearchResult>(response);
-// };
-
-
 export const searchProducts = async (
   params: SearchParams
 ): Promise<SearchResult> => {
   const queryParams = new URLSearchParams();
 
+  // Add all defined parameters to the query
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined) {
       queryParams.append(key, String(value));
@@ -247,16 +195,7 @@ export const searchProducts = async (
   });
 
   const response = await fetch(`${API_BASE}/search?${queryParams.toString()}`);
-  const data = await handleResponse<any>(response);
-  
-  // Ensure the response has the expected format
-  return {
-    hits: data.hits || [],
-    totalHits: data.totalHits || 0,
-    totalPages: data.totalPages || 1,
-    currentPage: data.currentPage || 1,
-    ...data
-  };
+  return handleResponse<SearchResult>(response);
 };
 
 /**
