@@ -658,7 +658,8 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
           )}
         </div>
 
-{/*         {/* Products Grid */}
+        {/* Products Grid */}
+        {/* 
         {isLoading ? (
          // <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
@@ -820,6 +821,7 @@ return {
 }
 
 export default Home
+
 
 
 
