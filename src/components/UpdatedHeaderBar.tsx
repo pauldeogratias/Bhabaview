@@ -214,7 +214,7 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
                 </button>
               )}
 
-              <Link href="/" className="flex items-center group min-w-0">
+{/*               <Link href="/" className="flex items-center group min-w-0">
                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-200 flex-shrink-0">
                   <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg"></div>
                   <Image
@@ -236,7 +236,46 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
                     Discover Amazing
                   </p>
                 </div>
-              </Link>
+              </Link> */}
+
+              // Replace your logo section with this improved version
+
+<Link href="/" className="flex items-center group min-w-0">
+  {/* Logo Container - Made larger on mobile for better visibility */}
+  <div className="relative w-12 h-12 sm:w-14 sm:h-14 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-200 flex-shrink-0">
+    <div className="absolute inset-0 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg"></div>
+    <Image
+      src="/Bhaba_logo.png"
+      alt="Bhaba Logo"
+      fill
+      className="rounded-xl p-1 object-contain"
+      priority
+      sizes="(max-width: 640px) 48px, 56px"
+      onError={(e) => {
+        // Fallback if image fails to load
+        console.error('Logo failed to load:', e);
+        (e.target as HTMLImageElement).style.display = 'none';
+      }}
+    />
+    {/* Fallback text logo if image doesn't load */}
+    <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 [&:has(~img[style*='display:_none'])]:opacity-100">
+      B
+    </div>
+  </div>
+  
+  {/* Text - visible on larger screens */}
+  <div className="min-w-0 hidden sm:block">
+    <h1 className={`text-lg sm:text-xl lg:text-2xl font-bold transition-colors duration-300 truncate ${textColor}`}>
+      Bhaba
+    </h1>
+    <p className={`text-xs transition-colors duration-300 ${
+      isScrolled ? 'text-gray-500' : 'text-white/80'
+    }`}>
+      Discover Amazing
+    </p>
+  </div>
+</Link>
+              
             </div>
 
             {/* Desktop Navigation */}
@@ -487,3 +526,4 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
 UpdatedHeaderBar.displayName = 'UpdatedHeaderBar';
 
 export default UpdatedHeaderBar
+
