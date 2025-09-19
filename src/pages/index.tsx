@@ -688,7 +688,8 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
           </div>
         ) : (
           <Suspense fallback={<div>Loading products...</div>}>
-           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
+{/*            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4"> */}
+            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -775,6 +776,7 @@ return {
 }
 
 export default Home
+
 
 
 
