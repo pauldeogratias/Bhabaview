@@ -658,7 +658,7 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
           )}
         </div>
 
-        {/* Products Grid */}
+{/*         {/* Products Grid */}
         {isLoading ? (
          // <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
@@ -699,7 +699,52 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
               ))}
             </div>
           </Suspense>
-        )}
+        )} */}
+
+        {/* Products Grid */}
+{isLoading ? (
+  <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+    {Array.from({ length: 12 }, (_, i) => (
+      <div key={i} className="break-inside-avoid mb-4">
+        <ProductCardSkeleton />
+      </div>
+    ))}
+  </div>
+) : filteredProducts.length === 0 ? (
+  <div className="text-center py-16">
+    <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+    <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+    <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
+    <button
+      onClick={() => {
+        setSearchQuery('')
+        setFilters({
+          categories: [],
+          vendors: [],
+          priceRange: [0, 10000000],
+          inStock: false
+        })
+      }}
+      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+    >
+      Clear Filters
+    </button>
+  </div>
+) : (
+  <Suspense fallback={<div>Loading products...</div>}>
+    <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4">
+      {filteredProducts.map((product) => (
+        <div key={product.id} className="break-inside-avoid mb-4">
+          <ProductCard
+            product={product}
+            onClick={handleProductClick}
+            viewMode="grid"
+          />
+        </div>
+      ))}
+    </div>
+  </Suspense>
+)}
       </main>
 
       <BottomNavigation onWholesaleClick={handleWholesaleClick} />
@@ -775,5 +820,6 @@ return {
 }
 
 export default Home
+
 
 
