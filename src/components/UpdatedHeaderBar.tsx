@@ -238,7 +238,8 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
                 </div>
               </Link> */}
 
-              // Replace your logo section with this improved version
+              {/* Replace your logo section with this improved version */}
+
 
 <Link href="/" className="flex items-center group min-w-0">
   {/* Logo Container - Made larger on mobile for better visibility */}
@@ -526,4 +527,5 @@ const UpdatedHeaderBar = memo<HeaderBarProps>(({
 UpdatedHeaderBar.displayName = 'UpdatedHeaderBar';
 
 export default UpdatedHeaderBar
+
 
