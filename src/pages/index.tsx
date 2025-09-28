@@ -18,6 +18,7 @@ import UpdatedHeaderBar from '../components/UpdatedHeaderBar'
 import BottomNavigation from '../components/BottomNavigation'
 import type { NextPage } from 'next'
 import { useRouter, NextRouter } from 'next/router'
+import Masonry from 'react-masonry-css'
 
 interface Product {
   id: string
@@ -451,6 +452,16 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
   const [, setShowWholesale] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
+    // Define breakpoints for responsive columns
+const breakpointColumnsObj = {
+  default: 5, // desktop
+  1280: 5,
+  1024: 4,   // large tablet
+  768: 3,    // tablet
+  640: 2,    // mobile
+  0: 1       // small screens
+}
+
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 100)
     return () => clearTimeout(timer)
@@ -680,46 +691,50 @@ return filtered // ✅ Keeps sorted data intact
     </div>
 
     {/* Products Grid */}
-    {isLoading ? (
-      <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
-        {Array.from({ length: 12 }, (_, i) => (
-          <ProductCardSkeleton key={i} />
-        ))}
-      </div>
-    ) : filteredProducts.length === 0 ? (
-      <div className="text-center py-16">
-        <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-        <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
-        <button
-          onClick={() => {
-            setSearchQuery('')
-            setFilters({
-              categories: [],
-              vendors: [],
-              priceRange: [0, 10000000],
-              inStock: false,
-            })
-          }}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Clear Filters
-        </button>
-      </div>
-    ) : (
-      <Suspense fallback={<div>Loading products...</div>}>
-        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
-          {filteredProducts.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onClick={handleProductClick}
-              viewMode="grid"
-            />
-          ))}
-        </div>
-      </Suspense>
-    )}
+ {isLoading ? (
+  <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
+    {Array.from({ length: 12 }, (_, i) => (
+      <ProductCardSkeleton key={i} />
+    ))}
+  </div>
+) : filteredProducts.length === 0 ? (
+  <div className="text-center py-16">
+    <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+    <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+    <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
+    <button
+      onClick={() => {
+        setSearchQuery('')
+        setFilters({
+          categories: [],
+          vendors: [],
+          priceRange: [0, 10000000],
+          inStock: false,
+        })
+      }}
+      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+    >
+      Clear Filters
+    </button>
+  </div>
+) : (
+  <Suspense fallback={<div>Loading products...</div>}>
+    <Masonry
+      breakpointCols={breakpointColumnsObj}
+      className="flex gap-4"
+      columnClassName="flex flex-col gap-4"
+    >
+      {filteredProducts.map(product => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onClick={handleProductClick}
+          viewMode="grid"
+        />
+      ))}
+    </Masonry>
+  </Suspense>
+)}
   </main>
   {/* ✅ Closing main tag here */}
 
@@ -797,6 +812,7 @@ return {
 }
 
 export default Home
+
 
 
 
