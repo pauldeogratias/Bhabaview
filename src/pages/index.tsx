@@ -1,12 +1,12 @@
 
-
+import { AnimatePresence, motion } from 'framer-motion'
 import React, { useState, useMemo, useEffect, Suspense } from 'react'
 import Head from 'next/head'
 import { AlertCircle, X, ChevronRight, TrendingUp, Star, Users } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { slugify } from '../utils/api'
-import { smartShuffle, shuffleArray } from '../utils/shuffle'
+import { smartShuffle} from '../utils/shuffle'
 
 const ProductCard = dynamic(() => import('../components/ProductCard'), {
   loading: () => <ProductCardSkeleton />
@@ -448,7 +448,7 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
   const [sortOption, setSortOption] = useState('relevance')
-  const [showWholesale, setShowWholesale] = useState(false)
+  const [, setShowWholesale] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -548,11 +548,16 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
         break
     }
 
-    if (sortOption === 'relevance' || !sortOption) {
-      return smartShuffle(filtered, 'categoryName')
-    } else {
-      return shuffleArray(filtered)
-    }
+    // if (sortOption === 'relevance' || !sortOption) {
+    //   return smartShuffle(filtered, 'categoryName')
+    // } else {
+    //   return shuffleArray(filtered)
+    // }
+     if (sortOption === 'relevance' || !sortOption) {
+  return smartShuffle(filtered, 'categoryName')
+}
+
+return filtered // ✅ Keeps sorted data intact
   }, [products, searchQuery, filters, sortOption])
 
   const handleProductClick = (product: Product) => {
@@ -569,154 +574,170 @@ const Home: NextPage<HomeProps> = ({ products = [], vendors = [], categories = [
     })
   }
 
+    const isSearchingOrFiltering = () => {
+  const isSearching = searchQuery.trim().length > 0;
+  const isFiltering =
+    filters.categories.length > 0 ||
+    filters.vendors.length > 0 ||
+    filters.inStock ||
+    filters.priceRange[0] > 0 ||
+    filters.priceRange[1] < 10000000; // ✅ FIXED: Upper bound check
+  const isSorting = sortOption !== 'relevance';
+
+  return isSearching || isFiltering || isSorting;
+};
+
   return (
     <div className="min-h-screen bg-gray-50 w-full overflow-x-hidden">
-      <Head>
-        <title>Bhaba Marketplace - Shop Online in Tanzania</title>
-        <meta name="description" content="Discover the best products at affordable prices in Tanzania. Shop electronics, clothing, shoes and more from verified vendors." />
-        <meta name="keywords" content="Tanzania ecommerce, online shopping, Bhaba Marketplace, electronics, clothing, shoes" />
-        <meta property="og:title" content="Bhaba Marketplace - Shop Online in Tanzania" />
-        <meta property="og:description" content="Discover the best products at affordable prices in Tanzania." />
-        <meta property="og:type" content="website" />
-        <link rel="preload" href="/Bhaba_logo.png" as="image" />
-        <link rel="dns-prefetch" href="https://ik.imagekit.io" />
-      </Head>
+  <Head>
+    <title>Bhaba Marketplace - Shop Online in Tanzania</title>
+    <meta
+      name="description"
+      content="Discover the best products at affordable prices in Tanzania. Shop electronics, clothing, shoes and more from verified vendors."
+    />
+    <meta
+      name="keywords"
+      content="Tanzania ecommerce, online shopping, Bhaba Marketplace, electronics, clothing, shoes"
+    />
+    <meta property="og:title" content="Bhaba Marketplace - Shop Online in Tanzania" />
+    <meta property="og:description" content="Discover the best products at affordable prices in Tanzania." />
+    <meta property="og:type" content="website" />
+    <link rel="preload" href="/Bhaba_logo.png" as="image" />
+    <link rel="dns-prefetch" href="https://ik.imagekit.io" />
+  </Head>
 
-      <UpdatedHeaderBar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        setShowFilters={setShowFilters}
-        sortOption={sortOption}
-        setSortOption={setSortOption}
-      />
+  {/* Header stays outside main */}
+  <UpdatedHeaderBar
+    searchQuery={searchQuery}
+    setSearchQuery={setSearchQuery}
+    viewMode={viewMode}
+    setViewMode={setViewMode}
+    setShowFilters={setShowFilters}
+    sortOption={sortOption}
+    setSortOption={setSortOption}
+  />
 
-      {/* Hero Section */}
-      <HeroSection />
-
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 md:py-8">
-        {showWholesale && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-blue-900">
-                Wholesale Products
-              </h2>
-              <p className="text-sm text-blue-700">Special bulk pricing available</p>
-            </div>
-            <button
-              onClick={() => {
-                setShowWholesale(false)
-                setFilters({ ...filters, vendors: [] })
-              }}
-              className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-            >
-              Show All Products
-            </button>
-          </div>
-        )}
-
-        {/* Categories */}
-        <ModernCategorySection
-          categories={categories}
-          categoryImages={categoryImages}
-          isLoading={isLoading}
-          router={router}
-        />
-
-        {/* Products Section Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+  {/* ✅ Opening main tag here */}
+  <main>
+    <AnimatePresence>
+      {!isSearchingOrFiltering() && (
+        <motion.div
+          key="hero-and-category"
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -15 }}
+          transition={{ duration: 0.4 }}
+        >
           <div>
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-              {searchQuery ? `Search results for "${searchQuery}"` : 'Featured Products'}
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} available
-            </p>
-          </div>
+            <HeroSection />
 
-          {(filters.categories.length > 0 || filters.vendors.length > 0 || filters.inStock) && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-gray-600">Filters:</span>
-              {filters.categories.map(categoryName => (
-                <span key={categoryName} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                  {categoryName}
-                  <button
-                    onClick={() => {
-                      setFilters({
-                        ...filters,
-                        categories: filters.categories.filter(name => name !== categoryName)
-                      })
-                    }}
-                    className="hover:text-blue-600 ml-1"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Products Grid */} 
-        {isLoading ? (
-         // <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
-       <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
-            {Array.from({ length: 12 }, (_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))}
+            <ModernCategorySection
+              categories={categories}
+              categoryImages={categoryImages}
+              isLoading={isLoading}
+              router={router}
+            />
           </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-16">
-            <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-            <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
-            <button
-              onClick={() => {
-                setSearchQuery('')
-                setFilters({
-                  categories: [],
-                  vendors: [],
-                  priceRange: [0, 10000000],
-                  inStock: false
-                })
-              }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Products Section Header */}
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+          {searchQuery ? `Search results for "${searchQuery}"` : 'Featured Products'}
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">
+          {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} available
+        </p>
+      </div>
+
+      {(filters.categories.length > 0 || filters.vendors.length > 0 || filters.inStock) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-gray-600">Filters:</span>
+          {filters.categories.map(categoryName => (
+            <span
+              key={categoryName}
+              className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
             >
-              Clear Filters
-            </button>
-          </div>
-        ) : (
-          <Suspense fallback={<div>Loading products...</div>}>
-{/*            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4"> */}
-            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onClick={handleProductClick}
-                  viewMode="grid"
-                />
-              ))}
-            </div>
-          </Suspense>
-        )} 
-      </main>
-
-      <BottomNavigation onWholesaleClick={handleWholesaleClick} />
-      <AppDownloadBanner position="floating" />
-
-      <Suspense fallback={null}>
-        <FilterModal
-          isOpen={showFilters}
-          onClose={() => setShowFilters(false)}
-          categories={categories.map(name => ({ id: name, category_name: name }))}
-          vendors={vendors}
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
-      </Suspense>
+              {categoryName}
+              <button
+                onClick={() => {
+                  setFilters({
+                    ...filters,
+                    categories: filters.categories.filter(name => name !== categoryName),
+                  })
+                }}
+                className="hover:text-blue-600 ml-1"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
+
+    {/* Products Grid */}
+    {isLoading ? (
+      <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-4 space-y-4">
+        {Array.from({ length: 12 }, (_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
+    ) : filteredProducts.length === 0 ? (
+      <div className="text-center py-16">
+        <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+        <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
+        <button
+          onClick={() => {
+            setSearchQuery('')
+            setFilters({
+              categories: [],
+              vendors: [],
+              priceRange: [0, 10000000],
+              inStock: false,
+            })
+          }}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Clear Filters
+        </button>
+      </div>
+    ) : (
+      <Suspense fallback={<div>Loading products...</div>}>
+        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4 space-y-4">
+          {filteredProducts.map(product => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onClick={handleProductClick}
+              viewMode="grid"
+            />
+          ))}
+        </div>
+      </Suspense>
+    )}
+  </main>
+  {/* ✅ Closing main tag here */}
+
+  {/* Footer Section - Outside main */}
+  <BottomNavigation onWholesaleClick={handleWholesaleClick} />
+  <AppDownloadBanner position="floating" />
+
+  <Suspense fallback={null}>
+    <FilterModal
+      isOpen={showFilters}
+      onClose={() => setShowFilters(false)}
+      categories={categories.map(name => ({ id: name, category_name: name }))}
+      vendors={vendors}
+      filters={filters}
+      onFiltersChange={setFilters}
+    />
+  </Suspense>
+</div>
   )
 }
 
@@ -776,6 +797,7 @@ return {
 }
 
 export default Home
+
 
 
 
