@@ -16,6 +16,17 @@ interface CategorySitemap {
   sitemap: string;
 }
 
+// Escape unsafe XML characters (&, <, >, ", ')
+const escapeXml = (unsafe = '') => {
+  return String(unsafe)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+};
+
+
 const generateSitemap = async (): Promise<void> => {
   try {
     const baseUrl = SEO_CONFIG.baseUrl;
@@ -144,8 +155,7 @@ ${allPages
     const imageTag = page.image 
       ? `    <image:image>
       <image:loc>${page.image}</image:loc>
-      <image:title>${products.find(p => page.url.includes(p.id))?.product_name || 'Product Image'}</image:title>
-    </image:image>`
+      <image:title>${escapeXml(products.find(p => page.url.includes(p.id))?.product_name || 'Product Image')}</image:title>    </image:image>`
       : '';
 
     return `  <url>
@@ -194,7 +204,7 @@ ${categoryPages
     const imageTag = page.image 
       ? `    <image:image>
       <image:loc>${page.image}</image:loc>
-      <image:title>${categoryProducts.find(p => page.url.includes(p.id))?.product_name || 'Product Image'}</image:title>
+<image:title>${escapeXml(categoryProducts.find(p => page.url.includes(p.id))?.product_name || 'Product Image')}</image:title>
     </image:image>`
       : '';
 
