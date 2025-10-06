@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run generate-sitemap && next build",
     "start": "next start",
     "lint": "next lint",
     "api": "node api/index.js",
@@ -16,7 +16,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "generate-icons": "node scripts/generate-icons.js",
-    "optimize-images": "node scripts/optimize-images.js"
+    "optimize-images": "node scripts/optimize-images.js",
+    "generate-sitemap": "tsx scripts/generate-sitemap.ts"
   },
   "dependencies": {
     "@next/bundle-analyzer": "^15.5.3",
@@ -31,7 +32,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
     "firebase": "^12.2.1",
-     "framer-motion": "^12.23.22",
+    "framer-motion": "^12.23.22",
     "lucide-react": "^0.525.0",
     "meilisearch": "^0.51.0",
     "next": "15.3.4",
@@ -73,7 +74,8 @@
     "style-loader": "^4.0.0",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }
-
