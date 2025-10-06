@@ -225,7 +225,7 @@
     <priority>0.7</priority>
     <image:image>
       <image:loc>https://ik.imagekit.io/3n0rrhtkz/firebase_files/vendor_products/NISK9aLgXwMX1TFgMA6kOpcal5l2/1000201765.jpg</image:loc>
-      <image:title>SAMSUNG S10+ (128GB & RAM 8GB)</image:title>
+      <image:title>SAMSUNG S10+ (128GB &amp; RAM 8GB)</image:title>
     </image:image>
   </url>
   <url>
@@ -15699,3 +15699,4 @@
     </image:image>
   </url>
 </urlset>
+
