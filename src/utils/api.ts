@@ -1,6 +1,6 @@
 // src/utils/api.ts
 // const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
- const API_BASE = "https://bhababackend.onrender.com";
+ const API_BASE = "https://bhabaapi.onrender.com";
 //   const isBrowser = typeof window !== 'undefined';
 // const isLocalhost = isBrowser && window.location.hostname === 'localhost';
 
@@ -308,3 +308,4 @@ export async function fetchWithRetry<T>(url: string, retries = 3): Promise<T> {
     throw error
   }
 }
+
