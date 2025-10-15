@@ -5,7 +5,7 @@
 module.exports = {
   ci: {
     collect: {
-      url: ['http://localhost:3000'],
+      url: ['https://www.bhabalimited.com', 'https://bhabalimited.com'],
       startServerCommand: 'npm start',
       numberOfRuns: 3
     },
@@ -23,4 +23,5 @@ module.exports = {
     }
   }
 }
+
 
