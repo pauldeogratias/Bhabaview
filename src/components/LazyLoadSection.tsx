@@ -1,4 +1,8 @@
+
 // src/components/LazyLoadSection.tsx - Intersection Observer for lazy loading
+import React, { useState } from 'react'
+
+
 export const LazyLoadSection: React.FC<{
   children: React.ReactNode
   className?: string
