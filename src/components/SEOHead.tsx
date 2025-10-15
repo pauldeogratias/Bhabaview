@@ -33,7 +33,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   noIndex = false
 }) => {
   const router = useRouter()
-  const baseUrl = "https://yourstore.com" // Replace with your actual domain
+  const baseUrl = "https://www.bhabalimited.com" // Replace with your actual domain
   const currentUrl = canonical || `${baseUrl}${router.asPath}`
 
   // Generate product-specific SEO data
@@ -166,5 +166,6 @@ const formatPrice = (price: number) => {
     minimumFractionDigits: 0,
   }).format(price)
 }
+
 
 export default SEOHead
