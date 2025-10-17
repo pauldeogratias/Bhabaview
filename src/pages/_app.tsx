@@ -449,7 +449,7 @@ function MyApp({ Component, pageProps }: AppProps<ExtendedPageProps>) {
   const { isLoading } = useAuth()
 
   if (isLoading) {
-    return <LoadingScreen message="Setting up authentication..." />
+    return <LoadingScreen message="Welcome Bhaba" />
   }
 
   const handleRetry = () => {
@@ -505,7 +505,7 @@ function MyApp({ Component, pageProps }: AppProps<ExtendedPageProps>) {
         <meta name="geo.placename" content="Dar es Salaam" />
         
         <link rel="icon" href="/Bhaba_logo.png" />
-        <link rel="canonical" href={`https://yourstore.com${router.asPath}`} />
+        <link rel="canonical" href={`https://bhabalimited.com${router.asPath}`} />
       </Head>
 
       {/* Analytics Scripts */}
@@ -645,3 +645,4 @@ function MyApp({ Component, pageProps }: AppProps<ExtendedPageProps>) {
 
 
 export default MyApp
+
