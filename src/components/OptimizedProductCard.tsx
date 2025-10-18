@@ -108,6 +108,20 @@ if (typeof window !== 'undefined' && window.fbq) {
         window.open(whatsappUrl, '_blank')
         
       } else if (type === 'call') {
+
+       if (typeof window !== 'undefined' && window.fbq) {
+            // Track Call Contact
+            window.fbq(
+                'trackSingle',
+                '1166816512038836',
+                'Purchase',
+                {
+                    'action': 'contact_call_click',
+                    'platform': 'web',
+                }
+            );
+        }
+        
         const callUrl = `tel:${hardcodedNumber}`
         window.location.href = callUrl
       }
@@ -320,5 +334,6 @@ if (typeof window !== 'undefined' && window.fbq) {
 OptimizedProductCard.displayName = 'OptimizedProductCard'
 
 export default OptimizedProductCard
+
 
 
