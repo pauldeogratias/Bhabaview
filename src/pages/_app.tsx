@@ -575,7 +575,6 @@ function MyApp({ Component, pageProps }: AppProps<ExtendedPageProps>) {
             />
           </noscript>
 
-          <!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -591,7 +590,7 @@ fbq('track', 'PageView');
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=1166816512038836&ev=PageView&noscript=1"
 /></noscript>
-<!-- End Meta Pixel Code -->
+
         </>
       )}
 
@@ -663,5 +662,6 @@ src="https://www.facebook.com/tr?id=1166816512038836&ev=PageView&noscript=1"
 
 
 export default MyApp
+
 
 
