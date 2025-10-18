@@ -70,6 +70,21 @@ const OptimizedProductCard = memo<ProductCardProps>(({
       message += `\n*Description:* ${product.description}\n`
     }
     message += `\nPlease let me know more about this product.`
+
+    // ✅ Add Meta Pixel tracking before opening WhatsApp
+if (typeof window !== 'undefined' && window.fbq) {
+  window.fbq(
+    'trackSingle',
+    '1166816512038836',
+    'Purchase',
+    {
+      action: 'contact_whatsapp_click',
+      platform: 'web',
+      product_name: product.product_name,
+      price: finalPrice
+    }
+  )
+}
     
     try {
       if (type === 'whatsapp') {
@@ -305,4 +320,5 @@ const OptimizedProductCard = memo<ProductCardProps>(({
 OptimizedProductCard.displayName = 'OptimizedProductCard'
 
 export default OptimizedProductCard
+
 
