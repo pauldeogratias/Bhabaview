@@ -323,8 +323,8 @@ const otherProducts = useMemo(() => {
   message += `\nPlease let me know more about this product.`
 
     // ✅ Add Meta Pixel tracking before opening WhatsApp
-if (typeof window !== 'undefined' && (window as any).fbq) {
-  (window as any).fbq(
+if (typeof window !== 'undefined' && window.fbq) {
+  window.fbq(
     'trackSingle',
     '1166816512038836',
     'Purchase',
@@ -336,6 +336,7 @@ if (typeof window !== 'undefined' && (window as any).fbq) {
     }
   )
 }
+
 
 
   
@@ -794,5 +795,6 @@ export async function getStaticProps({ params }: { params: { category: string, s
 }
 
 export default ProductDetail
+
 
 
